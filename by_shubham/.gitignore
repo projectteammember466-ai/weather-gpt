@@ -20,6 +20,7 @@ frontend/dist/
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
@@ -32,4 +33,6 @@ frontend/dist/
 !.env.example
 *.env
 .env.local
-
+.env.development.local
+.env.test.local
+.env.production.local

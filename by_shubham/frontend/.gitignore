@@ -7,12 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies & Build Outputs
-node_modules/
-dist/
-dist-ssr/
-frontend/node_modules/
-frontend/dist/
+# Dependencies
+node_modules
+dist
+dist-ssr
 *.local
 
 # Editor directories and files
@@ -20,6 +18,7 @@ frontend/dist/
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
@@ -32,4 +31,6 @@ frontend/dist/
 !.env.example
 *.env
 .env.local
-
+.env.development.local
+.env.test.local
+.env.production.local
