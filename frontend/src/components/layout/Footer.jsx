@@ -1,9 +1,9 @@
 import React from 'react';
 import { CloudSun, AlertTriangle, ShieldCheck } from 'lucide-react';
 
-export function Footer({ t = (k, f) => f || k, lang = 'en' }) {
+export function Footer({ t = (k, f) => f || k, lang = 'en', className = '' }) {
   return (
-    <footer style={{
+    <footer className={className} style={{
       marginTop: 'auto',
       borderTop: '1px solid var(--surface-border)',
       background: 'var(--surface-color)',

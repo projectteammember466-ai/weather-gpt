@@ -1,10 +1,11 @@
 // WeatherGPT API Abstraction Layer (Enhanced with Open-Meteo Geocoding & Weather Telemetry)
 
-import { getMockWeather, ALL_DEMO_CITIES } from '../data/weatherData.js';
+import { getMockWeather, ALL_DEMO_CITIES, MOCK_WEATHER_DATA } from '../data/weatherData.js';
 import { getHourlyForecast, getDailyForecast } from '../data/forecastData.js';
 import { getMockAlerts } from '../data/alertData.js';
 import { generateAIChatResponse } from '../data/chatData.js';
 import { getMockClimate } from '../data/climateData.js';
+import { chatWithGeminiAndWeatherTools } from './geminiService.js';
 
 // Simulated async delay
 const mockDelay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -176,7 +177,8 @@ export async function fetchAirQualityByCoords(lat, lon) {
 
   try {
     const res = await fetch(
-      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm10,pm2_5,nitrogen_dioxide,ozone`
+      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm10,pm2_5,nitrogen_dioxide,ozone`,
+      { signal: AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined }
     );
     if (res.ok) {
       const data = await res.json();
@@ -212,7 +214,8 @@ export async function fetchWeatherByCoords(lat, lon, locationName = 'Selected Lo
   try {
     const [weatherRes, aqiRes] = await Promise.all([
       fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`,
+        { signal: AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined }
       ),
       fetchAirQualityByCoords(lat, lon)
     ]);
@@ -297,17 +300,49 @@ export async function fetchWeatherByCoords(lat, lon, locationName = 'Selected Lo
     console.warn("Open-Meteo Live Weather API error, falling back to mock:", err);
   }
 
-  return getMockWeather(locationName.toLowerCase());
+  const fallback = getMockWeather(locationName.toLowerCase());
+  return {
+    ...fallback,
+    location: {
+      ...fallback.location,
+      name: locationName,
+      city: locationName,
+      region: region || fallback.location?.region || 'Region',
+      country: country || fallback.location?.country || 'India',
+      lat: lat,
+      lon: lon,
+      latitude: lat,
+      longitude: lon
+    }
+  };
+}
+
+export const DEFAULT_GOOGLE_MAPS_KEY = '';
+
+export function getGoogleMapsApiKey() {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('weathergpt_google_maps_api_key') ||
+         (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_MAPS_API_KEY) ||
+         '';
+}
+
+export function setGoogleMapsApiKey(key) {
+  if (typeof window === 'undefined') return;
+  if (key && key.trim()) {
+    localStorage.setItem('weathergpt_google_maps_api_key', key.trim());
+  } else {
+    localStorage.removeItem('weathergpt_google_maps_api_key');
+  }
 }
 
 // 4. Primary fetchWeather entry point (Seamless Live + Fallback)
 export async function fetchWeather(city = "jodhpur") {
   await mockDelay(100);
+  const cleanCity = (city || 'jodhpur').trim().toLowerCase();
   
-  // Try mock dictionary first for static demo cities (protects unit tests)
-  const mockResult = getMockWeather(city);
-  if (mockResult && mockResult.location && mockResult.location.city.toLowerCase() === city.toLowerCase()) {
-    // Also try live Open-Meteo update if online
+  // 1. Direct match for static fixture demo cities (protects unit tests)
+  if (MOCK_WEATHER_DATA[cleanCity]) {
+    const mockResult = MOCK_WEATHER_DATA[cleanCity];
     try {
       const liveData = await fetchWeatherByCoords(
         mockResult.location.lat,
@@ -323,14 +358,55 @@ export async function fetchWeather(city = "jodhpur") {
     return mockResult;
   }
 
-  // Geocode and fetch for custom searched locations
-  const geocoded = await searchGeocoding(city);
-  if (geocoded && geocoded.length > 0) {
-    const loc = geocoded[0];
-    return await fetchWeatherByCoords(loc.lat, loc.lon, loc.city || loc.name, loc.region, loc.country);
+  // 2. Geocode custom searched locations worldwide (resolves authentic coordinates)
+  try {
+    const geocoded = await searchGeocoding(city);
+    if (geocoded && geocoded.length > 0) {
+      const loc = geocoded[0];
+      return await fetchWeatherByCoords(loc.lat, loc.lon, loc.city || loc.name, loc.region, loc.country);
+    }
+  } catch (err) {
+    console.warn("Geocoding failed for custom location:", city, err);
   }
 
-  return mockResult || getMockWeather('jodhpur');
+  // 3. Check for directional station query (e.g., "Patna North", "Patna South", etc.)
+  const dirMatch = city.trim().match(/^(.*?)\s+(North-East|North-West|South-East|South-West|Northeast|Northwest|Southeast|Southwest|North|South|East|West)$/i);
+  if (dirMatch) {
+    const baseCity = dirMatch[1].trim();
+    const dir = dirMatch[2].toLowerCase();
+    const DIRECTIONAL_OFFSETS = {
+      'north': { dLat: 0.35, dLon: -0.20 },
+      'south': { dLat: -0.40, dLon: 0.25 },
+      'east': { dLat: 0.15, dLon: 0.45 },
+      'west': { dLat: -0.25, dLon: -0.35 },
+      'north-east': { dLat: 0.45, dLon: 0.40 },
+      'northeast': { dLat: 0.45, dLon: 0.40 },
+      'north-west': { dLat: 0.35, dLon: -0.35 },
+      'northwest': { dLat: 0.35, dLon: -0.35 },
+      'south-east': { dLat: -0.35, dLon: 0.35 },
+      'southeast': { dLat: -0.35, dLon: 0.35 },
+      'south-west': { dLat: -0.35, dLon: -0.35 },
+      'southwest': { dLat: -0.35, dLon: -0.35 }
+    };
+    const offset = DIRECTIONAL_OFFSETS[dir];
+    if (offset) {
+      try {
+        const baseWeather = await fetchWeather(baseCity);
+        if (baseWeather && baseWeather.location && baseWeather.location.lat && !(baseWeather.location.lat === 20 && baseWeather.location.lon === 77)) {
+          const baseLat = Number(baseWeather.location.lat);
+          const baseLon = Number(baseWeather.location.lon);
+          const lat = baseLat + offset.dLat;
+          const lon = baseLon + offset.dLon;
+          return await fetchWeatherByCoords(lat, lon, city, baseWeather.location.region || '', baseWeather.location.country || '');
+        }
+      } catch (err) {
+        console.warn("Directional lookup failed for:", city, err);
+      }
+    }
+  }
+
+  // 4. Fallback to mock dictionary
+  return getMockWeather(city);
 }
 
 export async function fetchForecast(city = "jodhpur", baseTemp = 30) {
@@ -347,8 +423,13 @@ export async function fetchAlerts(city = "jodhpur") {
 }
 
 export async function postChatMessage(userQuery, weatherData, lang = 'en', priorContext = {}) {
-  await mockDelay(300);
-  return generateAIChatResponse(userQuery, weatherData, lang, priorContext);
+  try {
+    return await chatWithGeminiAndWeatherTools(userQuery, weatherData, lang, priorContext);
+  } catch (err) {
+    console.warn("Gemini service encountered error, falling back to local chat generator:", err);
+    await mockDelay(200);
+    return generateAIChatResponse(userQuery, weatherData, lang, priorContext);
+  }
 }
 
 export async function fetchClimate(city = "jodhpur") {

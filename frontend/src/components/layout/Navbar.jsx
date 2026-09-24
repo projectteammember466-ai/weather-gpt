@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   CloudSun, Sparkles, LayoutDashboard, MessageSquare, History, ShieldAlert, 
   Settings as SettingsIcon, Sun, Moon, Monitor, MapPin, Map, GitBranch, Globe,
-  ChevronDown, CalendarRange, ArrowLeftRight
+  ChevronDown, CalendarRange, ArrowLeftRight, Menu, PanelLeft, PanelLeftOpen, PanelLeftClose
 } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../../data/translations';
 
@@ -18,6 +18,8 @@ export function Navbar({
   userMode, 
   lang = 'en', 
   setLang,
+  sidebarOpen = false,
+  onToggleSidebar,
   t = (k) => k
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -100,15 +102,40 @@ export function Navbar({
       alignItems: 'center'
     }}>
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-        {/* Brand */}
-        <div 
-          onClick={() => setActivePage('home')}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flexShrink: 0 }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && setActivePage('home')}
-          aria-label="WeatherGPT Home"
-        >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          {/* Sidebar Open/Close Toggle Button */}
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="navbar-sidebar-toggle-btn"
+              style={{
+                background: 'var(--surface-color)',
+                border: '1px solid var(--surface-border)',
+                color: 'var(--text-primary)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.45rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all var(--transition-fast)'
+              }}
+              title={sidebarOpen ? t('closeSidebar', 'Close Sidebar') : t('openSidebar', 'Open Sidebar')}
+              aria-label={sidebarOpen ? t('closeSidebar', 'Close Sidebar') : t('openSidebar', 'Open Sidebar')}
+            >
+              <Menu size={20} />
+            </button>
+          )}
+
+          {/* Brand */}
+          <div 
+            onClick={() => setActivePage('home')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flexShrink: 0 }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setActivePage('home')}
+            aria-label="WeatherGPT Home"
+          >
           <div style={{
             padding: '0.5rem',
             borderRadius: 'var(--radius-md)',
@@ -131,6 +158,7 @@ export function Navbar({
             </span>
           </div>
         </div>
+      </div>
 
         {/* Desktop Nav Links (strictly limited to Dashboard, Map, AI Chat, Alerts, More ▾) */}
         <nav style={{ display: 'none' }} className="desktop-nav" aria-label="Main Navigation">

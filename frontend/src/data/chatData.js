@@ -52,6 +52,80 @@ export const INTENT_DEFINITIONS = {
 };
 
 /**
+ * Dynamically extract one or more city names from user query (supporting Hindi, Hinglish, English)
+ */
+export function extractCitiesFromQuery(userQuery) {
+  if (!userQuery || typeof userQuery !== 'string') return [];
+  const qLower = userQuery.toLowerCase().trim();
+  const matched = [];
+
+  const commonCities = [
+    "jodhpur", "delhi", "mumbai", "jaipur", "london", "tokyo", "miami", "oslo", "cairo", 
+    "kolkata", "bengaluru", "bangalore", "chennai", "hyderabad", "ahmedabad", "pune", 
+    "ajmer", "patna", "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", 
+    "visakhapatnam", "vadodara", "ghaziabad", "ludhiana", "agra", "nashik", "faridabad", 
+    "meerut", "rajkot", "varanasi", "srinagar", "aurangabad", "dhanbad", "amritsar", 
+    "allahabad", "prayagraj", "ranchi", "howrah", "coimbatore", "jabalpur", "gwalior", 
+    "vijayawada", "madurai", "guwahati", "chandigarh", "hubli", "mysore", "bareilly", 
+    "aligarh", "moradabad", "jalandhar", "bhubaneswar", "salem", "warangal", "guntur", 
+    "bikaner", "noida", "jamshedpur", "bhilai", "cuttack", "firozabad", "kochi", 
+    "dehradun", "udaipur", "kota", "shimla", "manali", "new york", "los angeles", 
+    "chicago", "paris", "berlin", "rome", "madrid", "dubai", "singapore", "sydney", 
+    "toronto", "san francisco", "bangkok", "seoul", "moscow", "beijing", "shanghai"
+  ];
+
+  // 1. Check known cities
+  for (const c of commonCities) {
+    const regex = new RegExp(`\\b${c}\\b`, 'i');
+    if (regex.test(qLower) && !matched.map(m => m.toLowerCase()).includes(c)) {
+      matched.push(c.charAt(0).toUpperCase() + c.slice(1));
+    }
+  }
+
+  if (matched.length > 0) {
+    matched.sort((a, b) => qLower.indexOf(a.toLowerCase()) - qLower.indexOf(b.toLowerCase()));
+    return matched;
+  }
+
+  // 2. Non-city vocabulary filter (weather terms, times, intents, verbs)
+  const nonCityWords = new Set([
+    'what', 'is', 'the', 'weather', 'report', 'forecast', 'temperature', 'temp', 'mausam', 
+    'do', 'dijiye', 'batao', 'bataiye', 'kaisa', 'kaise', 'kese', 'hai', 'h', 'tha', 'hoga', 
+    'tell', 'me', 'about', 'in', 'of', 'for', 'at', 'a', 'an', 'ka', 'ke', 'ki', 'mein', 'me', 
+    'ko', 'se', 'kya', 'show', 'fetch', 'get', 'give', 'please', 'pls', 'today', 'aaj', 'kal', 
+    'tomorrow', 'live', 'update', 'currently', 'check', 'details', 'overview', 'status',
+    'wind', 'hawa', 'storm', 'rain', 'baarish', 'barsaat', 'umbrella', 'cloud', 'clouds',
+    'hot', 'cold', 'garmi', 'thand', 'evening', 'morning', 'shaam', 'subah', 'afternoon',
+    'dophar', 'night', 'raat', 'tonight', 'travel', 'safe', 'driving', 'drive', 'highway',
+    'road', 'safar', 'flight', 'sun', 'moon', 'sunrise', 'sunset', 'chand', 'suraj',
+    'humidity', 'moisture', 'nammi', 'aqi', 'air', 'quality', 'pollution', 'uv', 'sunscreen',
+    'farmer', 'kisan', 'crop', 'fasal', 'farming', 'irrigation', 'sinchai', 'khet',
+    'saved', 'favorite', 'favourite', 'bookmark', 'locations', 'my', 'alert', 'warning',
+    'khatra', 'chetwani', 'risk', 'flood', 'cyclone', 'best', 'time', 'when', 'kab',
+    'activity', 'window', 'guidance', 'clothes', 'kapde', 'jacket', 'wear', 'outdoor',
+    'run', 'jog', 'cycle', 'gym', 'fitness', 'match', 'cricket', 'and', 'aur', 'vs', 'versus'
+  ]);
+
+  // Extract from prepositional patterns like 'in <City>', '<City> ka', '<City> mein'
+  const cityPatterns = [
+    /\b(?:in|at|for|around)\s+([a-zA-Z]{3,20})/i,
+    /([a-zA-Z]{3,20})\s+(?:ka|ke|ki|mein|me|se|city|weather|mausam)/i
+  ];
+
+  for (const pat of cityPatterns) {
+    const match = qLower.match(pat);
+    if (match && match[1]) {
+      const cand = match[1].toLowerCase().trim();
+      if (!nonCityWords.has(cand)) {
+        matched.push(cand.charAt(0).toUpperCase() + cand.slice(1));
+      }
+    }
+  }
+
+  return matched;
+}
+
+/**
  * Extracts intent, entities (location, time, topic), and context from query
  */
 export function extractQueryUnderstanding(userQuery, priorContext = {}) {
@@ -75,14 +149,8 @@ export function extractQueryUnderstanding(userQuery, priorContext = {}) {
     time = priorContext.time;
   }
 
-  // 2. Location extraction & Comparison city pairs
-  const knownCities = ["jodhpur", "delhi", "mumbai", "jaipur", "london", "tokyo", "miami", "oslo", "cairo", "kolkata", "bengaluru", "chennai", "hyderabad", "ahmedabad", "pune"];
-  const matchedCities = [];
-  for (const c of knownCities) {
-    if (query.includes(c)) {
-      matchedCities.push(c.charAt(0).toUpperCase() + c.slice(1));
-    }
-  }
+  // 2. Dynamic Location extraction & Multi-city pairs
+  const matchedCities = extractCitiesFromQuery(query);
 
   let location = null;
   let locationA = null;
@@ -175,6 +243,7 @@ export function extractQueryUnderstanding(userQuery, priorContext = {}) {
     location,
     locationA,
     locationB,
+    locations: matchedCities.length > 0 ? matchedCities : [location],
     time,
     intent: intentKey,
     intentLabel: intentDef.label,

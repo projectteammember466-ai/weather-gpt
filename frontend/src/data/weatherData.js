@@ -260,6 +260,70 @@ export const MOCK_WEATHER_DATA = {
       dataTimestamp: new Date().toISOString()
     }
   },
+  patna: {
+    location: {
+      id: "loc-pat",
+      name: "Patna",
+      city: "Patna",
+      region: "Bihar",
+      state: "Bihar",
+      country: "India",
+      lat: 25.5941,
+      lon: 85.1376,
+      latitude: 25.5941,
+      longitude: 85.1376
+    },
+    current: {
+      temperature: 31,
+      feelsLike: 35,
+      condition: "Partly Cloudy",
+      icon: "CloudSun",
+      humidity: 72,
+      windSpeed: 14,
+      windDirection: "E",
+      rainProbability: 25,
+      highTemp: 33,
+      lowTemp: 24,
+      pressure: 1010,
+      visibility: 8,
+      uvIndex: 6,
+      cloudCover: 40,
+      dewPoint: 22,
+      sunrise: "05:42 AM",
+      sunset: "05:58 PM",
+      aqi: 95,
+      aqiCategory: "Moderate"
+    },
+    confidence: {
+      level: "High",
+      percentage: 86,
+      forecastWindow: "Daytime",
+      uncertaintyExplanation: "Monsoon boundary layer humidity in Gangetic plain."
+    },
+    whyForecast: {
+      topic: "Humid Gangetic Airflow",
+      signals: [
+        { name: "Gangetic Moisture", status: "Humid (72%)", icon: "Droplets" },
+        { name: "Surface Pressure", status: "1010 hPa", icon: "Gauge" },
+        { name: "Wind Velocity", status: "14 km/h East", icon: "Wind" }
+      ],
+      reasoning: "Moist easterly flow traversing across Bihar bringing warm humid conditions.",
+      aiExplanation: "Warm and humid day in Patna with scattered clouds and mild breeze."
+    },
+    contextAdvice: {
+      general: "Warm and humid conditions. Stay hydrated when outdoors.",
+      farmer: "Moisture levels favorable for paddy; monitor field drainage.",
+      traveler: "Surface visibility clear (8 km). Roads and rail transit running normally.",
+      outdoor: "Moderate UV and humidity. Plan outdoor workouts in the morning.",
+      emergency: "No active severe weather alerts."
+    },
+    metadata: {
+      source: "Gangetic Basin Weather Service (Mock)",
+      updatedAt: "5 mins ago",
+      freshness: "Fresh",
+      dataTimestamp: new Date().toISOString()
+    }
+  },
   london: {
     location: {
       id: "loc-lon",
@@ -737,6 +801,45 @@ export function getMockWeather(query = "") {
   );
 
   if (matchedKey) return MOCK_WEATHER_DATA[matchedKey];
+
+  // If query is a directional station of a known mock city, calculate regional offset
+  const dirMatch = key.match(/^(.*?)\s+(north-east|north-west|south-east|south-west|northeast|northwest|southeast|southwest|north|south|east|west)$/);
+  if (dirMatch) {
+    const base = dirMatch[1].trim();
+    const dir = dirMatch[2];
+    const baseMock = MOCK_WEATHER_DATA[base];
+    if (baseMock) {
+      const offsets = {
+        'north': { dLat: 0.35, dLon: -0.20 },
+        'south': { dLat: -0.40, dLon: 0.25 },
+        'east': { dLat: 0.15, dLon: 0.45 },
+        'west': { dLat: -0.25, dLon: -0.35 },
+        'north-east': { dLat: 0.45, dLon: 0.40 },
+        'northeast': { dLat: 0.45, dLon: 0.40 },
+        'north-west': { dLat: 0.35, dLon: -0.35 },
+        'northwest': { dLat: 0.35, dLon: -0.35 },
+        'south-east': { dLat: -0.35, dLon: 0.35 },
+        'southeast': { dLat: -0.35, dLon: 0.35 },
+        'south-west': { dLat: -0.35, dLon: -0.35 },
+        'southwest': { dLat: -0.35, dLon: -0.35 }
+      };
+      const off = offsets[dir] || { dLat: 0, dLon: 0 };
+      const cityName = query.charAt(0).toUpperCase() + query.slice(1);
+      return {
+        ...baseMock,
+        location: {
+          ...baseMock.location,
+          id: `loc-${key.replace(/\s+/g, '-')}`,
+          name: cityName,
+          city: cityName,
+          lat: Number((baseMock.location.lat + off.dLat).toFixed(4)),
+          lon: Number((baseMock.location.lon + off.dLon).toFixed(4)),
+          latitude: Number((baseMock.location.lat + off.dLat).toFixed(4)),
+          longitude: Number((baseMock.location.lon + off.dLon).toFixed(4))
+        }
+      };
+    }
+  }
 
   // Clean formatted fallback for general demo queries
   const cityName = query.charAt(0).toUpperCase() + query.slice(1);

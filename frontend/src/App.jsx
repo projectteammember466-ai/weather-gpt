@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { PanelLeftOpen } from 'lucide-react';
 import { useTheme } from './hooks/useTheme';
 import { useWeather } from './hooks/useWeather';
 import { useLanguage } from './hooks/useLanguage';
+import { useLocalStorage } from './hooks/useLocalStorage';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { MobileNav } from './components/layout/MobileNav';
@@ -23,6 +25,7 @@ export default function App() {
   const weatherState = useWeather('jodhpur');
   const [activePage, setActivePage] = useState('home');
   const [chatQuery, setChatQuery] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useLocalStorage('weathergpt_sidebar_open', true);
 
   const handleAskAI = (queryText) => {
     setChatQuery(queryText);
@@ -182,10 +185,13 @@ export default function App() {
         userMode={weatherState.userMode}
         lang={lang}
         setLang={setLang}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onToggle={() => setSidebarOpen(prev => !prev)}
         t={t}
       />
 
-      {/* Mobile Top Navigation Header */}
+      {/* Top Navigation Header */}
       <Navbar
         activePage={activePage}
         setActivePage={setActivePage}
@@ -198,16 +204,53 @@ export default function App() {
         userMode={weatherState.userMode}
         lang={lang}
         setLang={setLang}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen(prev => !prev)}
         t={t}
       />
 
-      <main className="app-main">
-        <div className="container">
+      {/* Floating Re-Open Sidebar Button when Sidebar is Collapsed on Desktop */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="desktop-sidebar-open-btn page-fade-in"
+          style={{
+            position: 'fixed',
+            top: '1rem',
+            left: '1rem',
+            zIndex: 45,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            background: 'var(--surface-color)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid var(--surface-border)',
+            color: 'var(--text-primary)',
+            padding: '0.45rem 0.85rem',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.82rem',
+            fontWeight: 650,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+            transition: 'all var(--transition-fast)'
+          }}
+          title={t('openSidebar', 'Open Sidebar')}
+          aria-label={t('openSidebar', 'Open Sidebar')}
+        >
+          <PanelLeftOpen size={17} style={{ color: 'var(--accent-blue)' }} />
+          <span>{t('openSidebar', 'Open Sidebar')}</span>
+        </button>
+      )}
+
+      <main className={`app-main ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'} ${activePage === 'chat' ? 'app-main-chat' : ''}`}>
+        <div className="container" style={activePage === 'chat' ? { height: '100%', display: 'flex', flexDirection: 'column' } : undefined}>
           {renderActivePage()}
         </div>
       </main>
 
-      <Footer t={t} lang={lang} />
+      {activePage !== 'chat' && (
+        <Footer t={t} lang={lang} className={sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'} />
+      )}
 
       <MobileNav activePage={activePage} setActivePage={setActivePage} t={t} />
     </div>

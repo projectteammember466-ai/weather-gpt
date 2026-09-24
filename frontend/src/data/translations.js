@@ -14,6 +14,8 @@ export const TRANSLATIONS = {
     pipeline: "AI Pipeline",
     howWeatherGPTWorks: "How WeatherGPT Works",
     refresh: "Refresh",
+    openSidebar: "Open Sidebar",
+    closeSidebar: "Close Sidebar",
     
     // Header & Search
     heroTitle: "Real-Time Weather Intelligence",
@@ -299,7 +301,14 @@ export const TRANSLATIONS = {
     noResultsDesc: "Try searching for another city or checking your filter criteria.",
     locationName: "Location Name",
     coordinates: "Coordinates",
-    action: "Action"
+    action: "Action",
+    apiKeysTitle: "AI Engine & Weather API Keys",
+    apiKeysSubtitle: "Configure Google Gemini for conversational function calling and OpenWeather. Open-Meteo telemetry functions globally without an API key.",
+    saveKeys: "Save API Keys",
+    keysSaved: "API Keys saved successfully!",
+    resetDefault: "Reset Default",
+    geminiKeyHint: "Powers function calling (get_weather_report). If rate-limited or denied, WeatherGPT automatically falls back to live satellite telemetry.",
+    openWeatherHint: "If empty, real-time Open-Meteo satellite observations & WMO telemetry are used without requiring any key."
   },
   
   hi: {
@@ -314,6 +323,8 @@ export const TRANSLATIONS = {
     pipeline: "WeatherGPT कैसे काम करता है",
     howWeatherGPTWorks: "WeatherGPT कैसे काम करता है",
     refresh: "ताज़ा करें",
+    openSidebar: "साइडबार खोलें",
+    closeSidebar: "साइडबार बंद करें",
     
     // Header & Search
     heroTitle: "रीयल-टाइम मौसम विश्लेषण",
@@ -599,7 +610,14 @@ export const TRANSLATIONS = {
     noResultsDesc: "कृपया कोई अन्य शहर खोजें।",
     locationName: "स्थान का नाम",
     coordinates: "निर्देशांक",
-    action: "कार्रवाई"
+    action: "कार्रवाई",
+    apiKeysTitle: "एआई इंजन एवं मौसम एपीआई कुंजियाँ (Keys)",
+    apiKeysSubtitle: "संवादात्मक फ़ंक्शन कॉलिंग के लिए Google Gemini और OpenWeather कॉन्फ़िगर करें। Open-Meteo उपग्रह डेटा बिना किसी कुंजी के काम करता है।",
+    saveKeys: "एपीआई कुंजियाँ सहेजें",
+    keysSaved: "एपीआई कुंजियाँ सफलतापूर्वक सहेजी गईं!",
+    resetDefault: "डिफ़ॉल्ट रीसेट करें",
+    geminiKeyHint: "फ़ंक्शन कॉलिंग (get_weather_report) को संचालित करता है। दर सीमित होने पर WeatherGPT स्वचालित रूप से लाइव उपग्रह टेलीमेट्री का उपयोग करता है।",
+    openWeatherHint: "यदि खाली है, तो बिना किसी कुंजी के रीयल-टाइम Open-Meteo उपग्रह अवलोकन और WMO टेलीमेट्री का उपयोग किया जाता है।"
   },
   
   hinglish: {
@@ -614,6 +632,8 @@ export const TRANSLATIONS = {
     pipeline: "How WeatherGPT Works",
     howWeatherGPTWorks: "How WeatherGPT Works",
     refresh: "Refresh Karein",
+    openSidebar: "Sidebar Kholein",
+    closeSidebar: "Sidebar Band Karein",
     
     // Header & Search
     heroTitle: "Real-Time Weather Intelligence",
@@ -899,7 +919,14 @@ export const TRANSLATIONS = {
     noResultsDesc: "Kisi doosri city ko search karein.",
     locationName: "Location Name",
     coordinates: "Coordinates",
-    action: "Action"
+    action: "Action",
+    apiKeysTitle: "AI Engine & Weather API Keys",
+    apiKeysSubtitle: "Conversational function calling ke liye Google Gemini aur OpenWeather configure karein. Open-Meteo bina kisi key ke globally operate karta hai.",
+    saveKeys: "API Keys Save Karein",
+    keysSaved: "API Keys successfully save ho gayi!",
+    resetDefault: "Default Reset Karein",
+    geminiKeyHint: "Function calling (get_weather_report) power karta hai. Rate-limit ya deny hone par WeatherGPT live satellite telemetry automatically use karta hai.",
+    openWeatherHint: "Agar empty hai, toh real-time Open-Meteo satellite observations bina kisi key ke use hoti hain."
   }
 };
 

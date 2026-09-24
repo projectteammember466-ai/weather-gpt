@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, RefreshCw, AlertCircle, RotateCw, Globe, Compass, Check } from 'lucide-react';
+import { 
+  Send, Sparkles, Loader2, RefreshCw, AlertCircle, RotateCw, Globe, Compass, Check,
+  ChevronDown, User, Sprout, Plane, Sun, AlertTriangle, Car, CalendarCheck, Activity, Info 
+} from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
 import { SuggestedQuestions } from './SuggestedQuestions';
 import { VoiceInput } from './VoiceInput';
@@ -9,6 +12,18 @@ import { useSavedLocations } from '../../hooks/useSavedLocations';
 import { extractQueryUnderstanding } from '../../data/chatData';
 import { SUPPORTED_LANGUAGES } from '../../data/translations';
 import { CONTEXT_MODES, getContextMode } from '../../data/contextModes';
+
+// Icon mapping for 8 perspective modes
+const MODE_ICONS = {
+  general: User,
+  farmer: Sprout,
+  traveler: Plane,
+  outdoor: Sun,
+  emergency: AlertTriangle,
+  commuter: Car,
+  event_planner: CalendarCheck,
+  fitness: Activity
+};
 
 export function ChatBox({ 
   weatherData, 
@@ -60,7 +75,32 @@ export function ChatBox({
   });
   const [lastFailedQuery, setLastFailedQuery] = useState(null);
   const [error, setError] = useState('');
+  const [perspectiveOpen, setPerspectiveOpen] = useState(false);
+  const perspectiveRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  // Close perspective dropdown on outside click or Escape
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (perspectiveRef.current && !perspectiveRef.current.contains(e.target)) {
+        setPerspectiveOpen(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setPerspectiveOpen(false);
+      }
+    };
+
+    if (perspectiveOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [perspectiveOpen]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -155,10 +195,12 @@ export function ChatBox({
     <div className="glass-card" style={{
       display: 'flex',
       flexDirection: 'column',
-      height: 'calc(100vh - 12rem)',
-      minHeight: '600px',
+      height: '100%',
+      maxHeight: '100%',
       padding: '1.25rem',
-      width: '100%'
+      width: '100%',
+      boxSizing: 'border-box',
+      overflow: 'hidden'
     }}>
       {/* Header */}
       <div style={{
@@ -195,7 +237,171 @@ export function ChatBox({
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {/* Weather Perspective Dropdown */}
+          <div ref={perspectiveRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setPerspectiveOpen(!perspectiveOpen)}
+              aria-expanded={perspectiveOpen}
+              aria-haspopup="true"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                background: perspectiveOpen ? 'var(--accent-glow)' : 'var(--surface-color)',
+                padding: '0.35rem 0.65rem',
+                borderRadius: 'var(--radius-sm)',
+                border: perspectiveOpen ? '1px solid var(--accent-blue)' : '1px solid var(--surface-border)',
+                color: 'var(--text-primary)',
+                fontSize: '0.78rem',
+                fontWeight: 650,
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)'
+              }}
+              title={t('tailorAIAdvice', 'Tailor AI advice to your activity')}
+            >
+              <div style={{
+                padding: '0.2rem',
+                borderRadius: '4px',
+                background: 'rgba(99, 102, 241, 0.15)',
+                color: 'var(--accent-indigo)',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                {React.createElement(MODE_ICONS[userMode] || User, { size: 13 })}
+              </div>
+              <span>{currentModeName}</span>
+              <ChevronDown 
+                size={13} 
+                style={{ 
+                  color: 'var(--text-muted)',
+                  transform: perspectiveOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.15s ease'
+                }} 
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {perspectiveOpen && (
+              <div 
+                className="glass-card page-fade-in"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  width: '290px',
+                  maxHeight: '380px',
+                  overflowY: 'auto',
+                  zIndex: 100,
+                  padding: '0.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                  border: '1px solid var(--surface-border)',
+                  background: 'var(--surface-card)'
+                }}
+              >
+                <div style={{
+                  padding: '0.35rem 0.5rem 0.45rem 0.5rem',
+                  borderBottom: '1px solid var(--surface-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Compass size={14} style={{ color: 'var(--accent-blue)' }} />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--text-primary)' }}>
+                      {t('weatherPerspective', 'Weather Perspective')}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                    8 {t('profiles', 'Profiles')}
+                  </span>
+                </div>
+
+                {CONTEXT_MODES.map((mode) => {
+                  const isSelected = userMode === mode.id;
+                  const IconComp = MODE_ICONS[mode.id] || User;
+                  const mName = mode.names[lang] || mode.names.en;
+                  const mDesc = mode.descriptions[lang] || mode.descriptions.en;
+
+                  return (
+                    <button
+                      key={mode.id}
+                      onClick={() => {
+                        if (setUserMode) setUserMode(mode.id);
+                        setPerspectiveOpen(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.5rem',
+                        padding: '0.45rem 0.55rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: isSelected ? 'var(--accent-glow)' : 'transparent',
+                        border: isSelected ? '1px solid var(--accent-blue)' : '1px solid transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all var(--transition-fast)'
+                      }}
+                    >
+                      <div style={{
+                        padding: '0.25rem',
+                        borderRadius: '4px',
+                        background: isSelected ? 'var(--accent-blue)' : 'var(--surface-color)',
+                        color: isSelected ? '#fff' : 'var(--text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexShrink: 0,
+                        marginTop: '0.1rem'
+                      }}>
+                        <IconComp size={13} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.25rem' }}>
+                          <span style={{
+                            fontSize: '0.78rem',
+                            fontWeight: isSelected ? 750 : 600,
+                            color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)'
+                          }}>
+                            {mName}
+                          </span>
+                          {isSelected && <Check size={13} style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />}
+                        </div>
+                        <p style={{
+                          fontSize: '0.66rem',
+                          color: 'var(--text-muted)',
+                          margin: '0.1rem 0 0 0',
+                          lineHeight: 1.25,
+                          whiteSpace: 'normal'
+                        }}>
+                          {mDesc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                <div style={{
+                  fontSize: '0.66rem',
+                  color: 'var(--text-muted)',
+                  background: 'var(--surface-color)',
+                  padding: '0.45rem 0.6rem',
+                  borderRadius: 'var(--radius-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  marginTop: '0.2rem'
+                }}>
+                  <Info size={12} style={{ flexShrink: 0, color: 'var(--accent-blue)' }} />
+                  <span>{t('modeSyncNote', 'Perspective syncs with Dashboard and Settings.')}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Quick Language Selector */}
           {setLang && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--surface-color)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--surface-border)' }}>

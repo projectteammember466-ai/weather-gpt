@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   CloudSun, Sparkles, LayoutDashboard, Map, MessageSquare, ShieldAlert, 
   CalendarRange, GitBranch, History, Settings as SettingsIcon, 
-  Sun, Moon, Monitor, MapPin, Globe, ArrowLeftRight
+  Sun, Moon, Monitor, MapPin, Globe, ArrowLeftRight, PanelLeftClose
 } from 'lucide-react';
 
 export function Sidebar({
@@ -16,6 +16,8 @@ export function Sidebar({
   userMode,
   lang = 'en',
   setLang,
+  isOpen = true,
+  onClose,
   t = (k, f) => f || k
 }) {
   // Primary Navigation: Dashboard, Compare Weather, WeatherGPT AI, Map, Alerts, Historical Weather
@@ -53,50 +55,102 @@ export function Sidebar({
     return <Monitor size={15} className="text-sky-400" />;
   };
 
+  const handleNavClick = (pageId) => {
+    setActivePage(pageId);
+    if (onClose && window.innerWidth < 900) {
+      onClose();
+    }
+  };
+
   return (
-    <aside 
-      className="app-sidebar" 
-      aria-label="Desktop Vertical Navigation"
-    >
-      {/* Brand Header */}
+    <>
+      {/* Mobile/Overlay Backdrop */}
       <div 
-        onClick={() => setActivePage('home')}
-        style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.75rem', 
-          cursor: 'pointer', 
-          padding: '0.5rem 0.25rem 1.25rem 0.25rem',
-          borderBottom: '1px solid var(--surface-border)'
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && setActivePage('home')}
-        aria-label="WeatherGPT Home"
+        className={`sidebar-backdrop ${isOpen ? 'active' : ''}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <aside 
+        className={`app-sidebar ${isOpen ? 'expanded' : 'collapsed'}`} 
+        aria-label="Desktop Vertical Navigation"
       >
-        <div style={{
-          padding: '0.55rem',
-          borderRadius: 'var(--radius-md)',
-          background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          boxShadow: '0 4px 12px rgba(56, 189, 248, 0.25)'
-        }}>
-          <CloudSun size={24} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '1.25rem', fontWeight: 850, letterSpacing: '-0.02em' }}>WeatherGPT</span>
-            <span className="badge badge-info" style={{ padding: '0.12rem 0.35rem', fontSize: '0.62rem' }}>
-              <Sparkles size={9} /> AI
-            </span>
+        {/* Brand Header & Sidebar Close Button */}
+        <div 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            gap: '0.5rem',
+            padding: '0.5rem 0.25rem 1.25rem 0.25rem',
+            borderBottom: '1px solid var(--surface-border)'
+          }}
+        >
+          <div
+            onClick={() => handleNavClick('home')}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              cursor: 'pointer',
+              flex: 1,
+              minWidth: 0
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleNavClick('home')}
+            aria-label="WeatherGPT Home"
+          >
+            <div style={{
+              padding: '0.55rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              boxShadow: '0 4px 12px rgba(56, 189, 248, 0.25)',
+              flexShrink: 0
+            }}>
+              <CloudSun size={24} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '1.25rem', fontWeight: 850, letterSpacing: '-0.02em' }}>WeatherGPT</span>
+                <span className="badge badge-info" style={{ padding: '0.12rem 0.35rem', fontSize: '0.62rem' }}>
+                  <Sparkles size={9} /> AI
+                </span>
+              </div>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {t('atmosphericIntelligence', 'Atmospheric Intelligence')}
+              </span>
+            </div>
           </div>
-          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-            {t('atmosphericIntelligence', 'Atmospheric Intelligence')}
-          </span>
+
+          {/* Close Sidebar Button */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="sidebar-close-btn"
+              style={{
+                background: 'var(--surface-color)',
+                border: '1px solid var(--surface-border)',
+                color: 'var(--text-secondary)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.4rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'all var(--transition-fast)'
+              }}
+              title={t('closeSidebar', 'Close Sidebar')}
+              aria-label={t('closeSidebar', 'Close Sidebar')}
+            >
+              <PanelLeftClose size={18} />
+            </button>
+          )}
         </div>
-      </div>
 
       {/* Navigation Sections */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.25rem', flex: 1, overflowY: 'auto' }}>
@@ -124,7 +178,7 @@ export function Sidebar({
                 return (
                   <li key={item.id}>
                     <button
-                      onClick={() => setActivePage(item.id)}
+                      onClick={() => handleNavClick(item.id)}
                       className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
                       aria-current={isActive ? 'page' : undefined}
                       style={{
@@ -189,7 +243,7 @@ export function Sidebar({
                 return (
                   <li key={item.id}>
                     <button
-                      onClick={() => setActivePage(item.id)}
+                      onClick={() => handleNavClick(item.id)}
                       className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
                       aria-current={isActive ? 'page' : undefined}
                     >
@@ -317,5 +371,6 @@ export function Sidebar({
         </div>
       </div>
     </aside>
+    </>
   );
 }

@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Settings as SettingsIcon, Sun, Moon, Monitor, Thermometer, Wind, MapPin, 
   Check, Globe, User, Sprout, Plane, AlertTriangle, Bell, ShieldCheck, CheckSquare, Square,
   Car, CalendarCheck, Activity, Star, Trash2, ArrowUp, ArrowDown, RotateCcw,
-  Sliders, Compass, Sparkles, ExternalLink
+  Sliders, Compass, Sparkles, ExternalLink, Key, Bot, CloudLightning
 } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../data/translations';
 import { CONTEXT_MODES } from '../data/contextModes';
 import { useSavedLocations } from '../hooks/useSavedLocations';
 import { useDashboardPreferences } from '../hooks/useDashboardPreferences';
+import { getGeminiApiKey, setGeminiApiKey, getOpenWeatherApiKey, setOpenWeatherApiKey, DEFAULT_GEMINI_KEY } from '../services/geminiService';
+import { getGoogleMapsApiKey, setGoogleMapsApiKey, DEFAULT_GOOGLE_MAPS_KEY } from '../services/api';
 
 const MODE_ICONS = {
   general: User,
@@ -50,6 +52,34 @@ export function Settings({
     resetPreferences, 
     isSectionVisible 
   } = useDashboardPreferences();
+
+  const [geminiKeyInput, setGeminiKeyInput] = useState(getGeminiApiKey());
+  const [openWeatherKeyInput, setOpenWeatherKeyInput] = useState(getOpenWeatherApiKey());
+  const [googleMapsKeyInput, setGoogleMapsKeyInput] = useState(getGoogleMapsApiKey());
+  const [keySavedMessage, setKeySavedMessage] = useState('');
+
+  const handleSaveKeys = (e) => {
+    e.preventDefault();
+    setGeminiApiKey(geminiKeyInput);
+    setOpenWeatherApiKey(openWeatherKeyInput);
+    setGoogleMapsApiKey(googleMapsKeyInput);
+    setKeySavedMessage(t('keysSaved', 'API Keys saved successfully!'));
+    setTimeout(() => setKeySavedMessage(''), 3000);
+  };
+
+  const handleResetDefaultGemini = () => {
+    setGeminiKeyInput(DEFAULT_GEMINI_KEY);
+    setGeminiApiKey(DEFAULT_GEMINI_KEY);
+    setKeySavedMessage(t('geminiReset', 'Reset to default Gemini API key!'));
+    setTimeout(() => setKeySavedMessage(''), 3000);
+  };
+
+  const handleResetDefaultGoogleMaps = () => {
+    setGoogleMapsKeyInput(DEFAULT_GOOGLE_MAPS_KEY);
+    setGoogleMapsApiKey(DEFAULT_GOOGLE_MAPS_KEY);
+    setKeySavedMessage(t('googleMapsReset', 'Reset to default Google Maps API key!'));
+    setTimeout(() => setKeySavedMessage(''), 3000);
+  };
 
   const SECTION_LABELS = {
     currentWeather: t('sectionCurrentWeather', 'Current Weather & Hero'),
@@ -626,6 +656,156 @@ export function Settings({
             );
           })}
         </div>
+      </div>
+
+      {/* AI & Weather API Keys Configuration Card */}
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
+            <Key size={18} style={{ color: 'var(--accent-blue)' }} />
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 750 }}>
+              {t('apiKeysTitle', 'AI Engine & Weather API Keys')}
+            </h2>
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0, lineHeight: 1.4 }}>
+            {t('apiKeysSubtitle', 'Configure Google Gemini for conversational function calling and OpenWeather. Open-Meteo telemetry functions globally without an API key.')}
+          </p>
+        </div>
+
+        <form onSubmit={handleSaveKeys} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Gemini API Key */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Bot size={15} style={{ color: 'var(--accent-blue)' }} />
+              <span>Google Gemini API Key</span>
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={geminiKeyInput}
+                onChange={(e) => setGeminiKeyInput(e.target.value)}
+                placeholder="Enter Google Gemini API Key"
+                style={{
+                  flex: 1,
+                  minWidth: '260px',
+                  padding: '0.55rem 0.85rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--surface-color)',
+                  border: '1px solid var(--surface-border)',
+                  fontSize: '0.85rem',
+                  fontFamily: 'monospace',
+                  color: 'var(--text-primary)'
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleResetDefaultGemini}
+                style={{
+                  padding: '0.55rem 0.85rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--surface-color)',
+                  border: '1px solid var(--surface-border)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {t('resetDefault', 'Reset Default')}
+              </button>
+            </div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {t('geminiKeyHint', 'Powers function calling (get_weather_report). If rate-limited or denied, WeatherGPT automatically falls back to live satellite telemetry.')}
+            </span>
+          </div>
+
+          {/* OpenWeather API Key */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <CloudLightning size={15} style={{ color: '#eab308' }} />
+              <span>OpenWeather API Key ({t('optional', 'Optional')})</span>
+            </label>
+            <input
+              type="text"
+              value={openWeatherKeyInput}
+              onChange={(e) => setOpenWeatherKeyInput(e.target.value)}
+              placeholder="e.g. 1a2b3c4d5e6f... (optional)"
+              style={{
+                padding: '0.55rem 0.85rem',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--surface-color)',
+                border: '1px solid var(--surface-border)',
+                fontSize: '0.85rem',
+                fontFamily: 'monospace',
+                color: 'var(--text-primary)'
+              }}
+            />
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {t('openWeatherHint', 'If empty, real-time Open-Meteo satellite observations & WMO telemetry are used without requiring any key.')}
+            </span>
+          </div>
+
+          {/* Google Maps API Key */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <MapPin size={15} style={{ color: 'var(--accent-blue)' }} />
+              <span>Google Maps API Key</span>
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={googleMapsKeyInput}
+                onChange={(e) => setGoogleMapsKeyInput(e.target.value)}
+                placeholder="Enter Google Maps API Key"
+                style={{
+                  flex: 1,
+                  minWidth: '260px',
+                  padding: '0.55rem 0.85rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--surface-color)',
+                  border: '1px solid var(--surface-border)',
+                  fontSize: '0.85rem',
+                  fontFamily: 'monospace',
+                  color: 'var(--text-primary)'
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleResetDefaultGoogleMaps}
+                style={{
+                  padding: '0.55rem 0.85rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--surface-color)',
+                  border: '1px solid var(--surface-border)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {t('resetDefault', 'Reset Default')}
+              </button>
+            </div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {t('googleMapsHint', 'Powers high-resolution Google Maps Roadmap, Satellite Hybrid, and Terrain layers on the radar map.')}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.25rem' }}>
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ padding: '0.55rem 1.25rem', fontSize: '0.85rem' }}
+            >
+              {t('saveKeys', 'Save API Keys')}
+            </button>
+            {keySavedMessage && (
+              <span style={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 650, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Check size={14} /> {keySavedMessage}
+              </span>
+            )}
+          </div>
+        </form>
       </div>
 
       {/* How WeatherGPT Works Card */}
