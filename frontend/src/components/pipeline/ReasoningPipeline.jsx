@@ -195,7 +195,7 @@ export function ReasoningPipeline({
     : sampleQuery;
 
   return (
-    <div className="glass-card" style={{ padding: '1.75rem', maxWidth: '850px', margin: '0 auto' }}>
+    <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.75rem)', maxWidth: '850px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <div style={{
           padding: '0.4rem',
@@ -233,32 +233,33 @@ export function ReasoningPipeline({
                 background: isActive ? 'var(--accent-glow)' : 'var(--surface-color)',
                 border: isActive ? '2px solid var(--accent-blue)' : '1px solid var(--surface-border)',
                 borderRadius: 'var(--radius-md)',
-                padding: '1rem',
+                padding: 'clamp(0.75rem, 2.5vw, 1rem)',
                 transition: 'all var(--transition-fast)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                   <div style={{
-                    width: '28px',
-                    height: '28px',
+                    width: '26px',
+                    height: '26px',
                     borderRadius: 'var(--radius-full)',
                     background: isActive ? 'var(--accent-blue)' : 'var(--surface-card)',
                     color: isActive ? '#ffffff' : 'var(--text-muted)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 800
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    flexShrink: 0
                   }}>
                     {stage.step}
                   </div>
-                  <Icon size={18} style={{ color: isActive ? 'var(--accent-blue)' : 'var(--text-muted)' }} />
-                  <span style={{ fontSize: '0.98rem', fontWeight: 750, color: 'var(--text-primary)' }}>
+                  <Icon size={17} style={{ color: isActive ? 'var(--accent-blue)' : 'var(--text-muted)', flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.95rem', fontWeight: 750, color: 'var(--text-primary)' }}>
                     {stage.title}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                   {stage.summary}
                 </span>
               </div>

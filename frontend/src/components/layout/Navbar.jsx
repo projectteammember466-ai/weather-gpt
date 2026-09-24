@@ -130,30 +130,31 @@ export function Navbar({
           {/* Brand */}
           <div 
             onClick={() => setActivePage('home')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && setActivePage('home')}
             aria-label="WeatherGPT Home"
           >
           <div style={{
-            padding: '0.5rem',
+            padding: '0.4rem',
             borderRadius: 'var(--radius-md)',
             background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))',
             color: '#fff',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            flexShrink: 0
           }}>
-            <CloudSun size={22} />
+            <CloudSun size={20} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ fontSize: '1.2rem', fontWeight: 850, letterSpacing: '-0.02em' }}>WeatherGPT</span>
-              <span className="badge badge-info" style={{ padding: '0.15rem 0.4rem', fontSize: '0.65rem' }}>
+              <span style={{ fontSize: 'clamp(1rem, 3.5vw, 1.2rem)', fontWeight: 850, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>WeatherGPT</span>
+              <span className="badge badge-info navbar-ai-badge" style={{ padding: '0.15rem 0.35rem', fontSize: '0.65rem' }}>
                 <Sparkles size={10} /> AI
               </span>
             </div>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+            <span className="navbar-subtitle" style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
               {t('atmosphericIntelligence', 'Conversational Weather Intelligence')}
             </span>
           </div>
@@ -294,7 +295,7 @@ export function Navbar({
         </nav>
 
         {/* Top Right Quick Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
           {/* Active Context Mode Tag */}
           {userMode && userMode !== 'general' && (
             <span 
@@ -310,28 +311,34 @@ export function Navbar({
 
           {/* Current City Indicator Badge */}
           <div 
+            className="navbar-city-badge"
             title={`Current location: ${city || 'Location'}`}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.35rem',
-              padding: '0.4rem 0.75rem',
+              padding: '0.4rem 0.65rem',
               borderRadius: 'var(--radius-full)',
               background: 'var(--surface-card)',
               border: '1px solid var(--surface-border)',
-              fontSize: '0.8rem',
+              fontSize: '0.78rem',
               color: 'var(--text-primary)',
-              fontWeight: 600
+              fontWeight: 600,
+              maxWidth: '120px',
+              flexShrink: 1
             }}
           >
-            <MapPin size={14} style={{ color: 'var(--accent-blue)' }} />
-            <span>{city ? city.charAt(0).toUpperCase() + city.slice(1) : 'Location'}</span>
+            <MapPin size={14} style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {city ? city.charAt(0).toUpperCase() + city.slice(1) : 'Location'}
+            </span>
           </div>
 
           {/* Quick Language Toggle (A12) */}
           {setLang && (
             <button
               onClick={cycleLanguage}
+              className="navbar-lang-btn"
               title={`Active Language: ${lang.toUpperCase()} - Click to switch`}
               aria-label={`Switch language. Current: ${lang.toUpperCase()}`}
               style={{

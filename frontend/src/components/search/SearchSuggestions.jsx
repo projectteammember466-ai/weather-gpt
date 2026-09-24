@@ -23,6 +23,8 @@ export function SearchSuggestions({ query, onSelectCity, onSelectQuery, searchHi
       right: 0,
       zIndex: 40,
       padding: '1rem',
+      maxHeight: 'min(380px, 60vh)',
+      overflowY: 'auto',
       background: 'var(--surface-card)',
       boxShadow: 'var(--shadow-lg)',
       borderRadius: 'var(--radius-md)'

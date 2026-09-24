@@ -171,13 +171,8 @@ export function CompareWeather({
       </div>
 
       {/* City Pickers Box */}
-      <div className="glass-card" style={{ padding: '1.25rem' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          gap: '0.75rem',
-          alignItems: 'center'
-        }}>
+      <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.25rem)' }}>
+        <div className="compare-pickers-grid">
           {/* Location A Input */}
           <div style={{ position: 'relative' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
@@ -355,11 +350,11 @@ export function CompareWeather({
           {/* Side-by-Side Hero Comparison Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(240px, 100%, 280px), 1fr))',
             gap: '1rem'
           }}>
             {/* City A Card */}
-            <div className="glass-card" style={{ padding: '1.5rem', borderTop: '3px solid var(--accent-blue)' }}>
+            <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.5rem)', borderTop: '3px solid var(--accent-blue)' }}>
               <span className="badge badge-info" style={{ fontSize: '0.68rem', marginBottom: '0.5rem' }}>
                 {t('locationA', 'Location A')}
               </span>
@@ -386,7 +381,7 @@ export function CompareWeather({
             </div>
 
             {/* City B Card */}
-            <div className="glass-card" style={{ padding: '1.5rem', borderTop: '3px solid #f97316' }}>
+            <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.5rem)', borderTop: '3px solid #f97316' }}>
               <span className="badge badge-warning" style={{ fontSize: '0.68rem', marginBottom: '0.5rem' }}>
                 {t('locationB', 'Location B')}
               </span>

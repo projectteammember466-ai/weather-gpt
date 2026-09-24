@@ -45,7 +45,7 @@ export function WeatherHero({
   return (
     <>
       <div className="glass-card" style={{
-        padding: '2rem',
+        padding: 'clamp(1rem, 3.5vw, 2rem)',
         position: 'relative',
         overflow: 'hidden',
         borderColor: 'rgba(56, 189, 248, 0.2)'
@@ -202,7 +202,7 @@ export function WeatherHero({
             </div>
 
             <div>
-              <div style={{ fontSize: '3.75rem', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.03em' }}>
+              <div style={{ fontSize: 'clamp(2.5rem, 8vw, 3.75rem)', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.03em' }}>
                 {formatTemperature(current.temperature, tempUnit)}
               </div>
               <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-secondary)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -231,9 +231,9 @@ export function WeatherHero({
           {/* Highlights Stack */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(85px, 20vw, 120px), 1fr))',
             gap: '0.85rem',
-            minWidth: '220px',
+            minWidth: 'min(220px, 100%)',
             flex: 1
           }}>
             {current.feelsLike !== undefined && (

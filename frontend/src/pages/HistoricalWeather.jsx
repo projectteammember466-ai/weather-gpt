@@ -261,7 +261,7 @@ export function HistoricalWeather({
       </div>
 
       {/* Control Panel: Location Search & Date Range Selectors */}
-      <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.25rem)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           {/* Active Location Indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -289,8 +289,8 @@ export function HistoricalWeather({
           </div>
 
           {/* Quick Location Switcher */}
-          <form onSubmit={handleLocationSearch} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <form onSubmit={handleLocationSearch} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', width: '100%', maxWidth: '340px' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
               <Search size={15} style={{ position: 'absolute', left: '0.75rem', color: 'var(--text-muted)' }} />
               <input
                 type="text"
@@ -304,7 +304,8 @@ export function HistoricalWeather({
                   border: '1px solid var(--surface-border)',
                   fontSize: '0.82rem',
                   color: 'var(--text-primary)',
-                  width: '240px'
+                  width: '100%',
+                  minWidth: 0
                 }}
               />
             </div>
@@ -312,7 +313,7 @@ export function HistoricalWeather({
               type="submit"
               disabled={isSearchingLocation || !searchQuery.trim()}
               className="btn-secondary"
-              style={{ padding: '0.45rem 0.75rem', fontSize: '0.82rem', cursor: 'pointer' }}
+              style={{ padding: '0.45rem 0.75rem', fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               {isSearchingLocation ? <RefreshCw size={14} className="animate-spin" /> : t('search', 'Search')}
             </button>

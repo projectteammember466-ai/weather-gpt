@@ -7,17 +7,17 @@ import {
 export function MobileNav({ activePage, setActivePage, t = (k) => k }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
-  const isMoreActive = ['historical', 'pipeline', 'history', 'settings', 'map'].includes(activePage);
+  const isMoreActive = ['compare', 'historical', 'pipeline', 'history', 'settings'].includes(activePage);
 
   const tabs = [
     { id: 'home', label: t('dashboard', 'Dashboard'), icon: LayoutDashboard },
-    { id: 'compare', label: t('compare', 'Compare'), icon: ArrowLeftRight },
-    { id: 'chat', label: t('chat', 'WeatherGPT AI'), icon: Sparkles },
+    { id: 'map', label: t('map', 'Weather Map'), icon: Map },
+    { id: 'chat', label: t('chat', 'WeatherGPT AI'), icon: Sparkles, isAI: true },
     { id: 'alerts', label: t('alerts', 'Alerts'), icon: ShieldAlert },
   ];
 
   const moreItems = [
-    { id: 'map', label: t('map', 'Weather Map'), icon: Map },
+    { id: 'compare', label: t('compare', 'Compare Weather'), icon: ArrowLeftRight },
     { id: 'historical', label: t('historical', 'Historical Weather'), icon: CalendarRange },
     { id: 'pipeline', label: t('howWeatherGPTWorks', 'How WeatherGPT Works'), icon: Sparkles },
     { id: 'history', label: t('history', 'History'), icon: History },
@@ -58,7 +58,7 @@ export function MobileNav({ activePage, setActivePage, t = (k) => k }) {
           aria-label="More Navigation Options"
           style={{
             position: 'fixed',
-            bottom: '4.5rem',
+            bottom: '4.75rem',
             right: '1rem',
             left: '1rem',
             maxWidth: '380px',
@@ -89,10 +89,15 @@ export function MobileNav({ activePage, setActivePage, t = (k) => k }) {
                 border: 'none',
                 color: 'var(--text-secondary)',
                 cursor: 'pointer',
-                padding: '0.2rem'
+                padding: '0.35rem',
+                minWidth: '44px',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
 
@@ -111,6 +116,7 @@ export function MobileNav({ activePage, setActivePage, t = (k) => k }) {
                   alignItems: 'center',
                   gap: '0.75rem',
                   padding: '0.75rem 1rem',
+                  minHeight: '44px',
                   borderRadius: 'var(--radius-md)',
                   fontSize: '0.9rem',
                   fontWeight: isActive ? 750 : 500,
@@ -145,15 +151,19 @@ export function MobileNav({ activePage, setActivePage, t = (k) => k }) {
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop: '1px solid var(--surface-border)',
-          height: '4rem',
+          minHeight: '4.25rem',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-around'
+          justifyContent: 'space-around',
+          boxSizing: 'border-box'
         }}
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activePage === tab.id;
+          const isAI = tab.isAI;
+
           return (
             <button
               key={tab.id}
@@ -165,18 +175,40 @@ export function MobileNav({ activePage, setActivePage, t = (k) => k }) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '0.2rem',
+                justifyContent: 'center',
+                gap: isAI ? '0.15rem' : '0.2rem',
                 color: isActive ? 'var(--accent-blue)' : 'var(--text-muted)',
                 fontSize: '0.68rem',
                 fontWeight: isActive ? 750 : 500,
-                padding: '0.35rem 0.5rem',
+                padding: '0.25rem 0.4rem',
+                minWidth: '44px',
+                minHeight: '44px',
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer'
               }}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon size={18} />
+              {isAI ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: 'var(--radius-full)',
+                  background: isActive 
+                    ? 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))' 
+                    : 'rgba(56, 189, 248, 0.15)',
+                  boxShadow: isActive ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  color: isActive ? '#fff' : 'var(--accent-blue)'
+                }}>
+                  <Icon size={17} />
+                </div>
+              ) : (
+                <Icon size={18} />
+              )}
               <span>{tab.label}</span>
             </button>
           );
@@ -192,18 +224,21 @@ export function MobileNav({ activePage, setActivePage, t = (k) => k }) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.2rem',
             color: isMoreActive || showMoreMenu ? 'var(--accent-blue)' : 'var(--text-muted)',
             fontSize: '0.68rem',
             fontWeight: isMoreActive || showMoreMenu ? 750 : 500,
-            padding: '0.35rem 0.5rem',
+            padding: '0.25rem 0.4rem',
+            minWidth: '44px',
+            minHeight: '44px',
             border: 'none',
             background: 'transparent',
             cursor: 'pointer'
           }}
         >
           <MoreHorizontal size={18} />
-          <span>More</span>
+          <span>{t('more', 'More')}</span>
         </button>
 
         <style>{`

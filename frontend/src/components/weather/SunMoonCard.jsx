@@ -45,7 +45,7 @@ export function SunMoonCard({
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(135px, 28vw, 200px), 1fr))',
         gap: '0.85rem'
       }}>
         {/* Sunrise Card */}

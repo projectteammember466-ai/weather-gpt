@@ -11,7 +11,7 @@ export function ClimateSummary({ climate, tempUnit = 'C', onNavigateHistorical, 
   const maxRain = Math.max(...climate.months.map(m => m.rainfall));
 
   return (
-    <div className="glass-card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
+    <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.5rem)', marginTop: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Calendar size={20} style={{ color: 'var(--accent-blue)' }} />
@@ -51,7 +51,7 @@ export function ClimateSummary({ climate, tempUnit = 'C', onNavigateHistorical, 
       {/* Climate Highlights Row */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(135px, 28vw, 180px), 1fr))',
         gap: '0.75rem',
         marginBottom: '1.5rem'
       }}>
@@ -82,7 +82,7 @@ export function ClimateSummary({ climate, tempUnit = 'C', onNavigateHistorical, 
 
       {/* Monthly Bar Graphic or Table */}
       {viewMode === 'chart' ? (
-        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '0.5rem' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '0.5rem', width: '100%', maxWidth: '100%', minWidth: 0 }}>
           <div style={{ display: 'flex', gap: '0.75rem', minWidth: '550px', alignItems: 'flex-end', height: '180px', paddingTop: '1.5rem' }}>
             {climate.months.map((m, idx) => {
               const tempHeight = Math.max(15, (m.avgHigh / maxTemp) * 110);

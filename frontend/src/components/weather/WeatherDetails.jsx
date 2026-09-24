@@ -23,7 +23,7 @@ export function WeatherDetails({ current, t = (k, f) => f || k }) {
       </h2>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(130px, 28vw, 180px), 1fr))',
         gap: '1rem'
       }}>
         {metrics.map((item, idx) => {

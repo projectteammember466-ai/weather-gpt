@@ -157,6 +157,9 @@ select:focus-visible {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .glass-card:hover {
@@ -168,7 +171,20 @@ select:focus-visible {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding-left: clamp(0.75rem, 3vw, 1.5rem);
+  padding-right: clamp(0.75rem, 3vw, 1.5rem);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Responsive Scroll Containers */
+.table-responsive,
+.chart-responsive {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Reduced Motion Support */

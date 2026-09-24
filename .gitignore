@@ -32,4 +32,9 @@ frontend/dist/
 !.env.example
 *.env
 .env.local
+env
+backend/.env
+backend/.env.*
+!backend/.env.example
+
 

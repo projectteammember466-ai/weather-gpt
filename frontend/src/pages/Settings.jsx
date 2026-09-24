@@ -143,7 +143,7 @@ export function Settings({
       </div>
 
       {/* Language / भाषा */}
-      <div className="glass-card" style={{ padding: '1.5rem' }}>
+      <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.5rem)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
           <Globe size={18} style={{ color: 'var(--accent-blue)' }} />
           <h2 style={{ fontSize: '1.1rem', fontWeight: 750 }}>
@@ -154,7 +154,7 @@ export function Settings({
           {t('languageDesc', 'Choose your application interface language. Translates navigation, cards, alerts, forecasts, and AI assistance.')}
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(135px, 28vw, 180px), 1fr))', gap: '0.75rem' }}>
           {SUPPORTED_LANGUAGES.map((l) => {
             const isSelected = lang === l.id;
             return (
@@ -187,7 +187,7 @@ export function Settings({
       </div>
 
       {/* User Context Modes - 8 Profiles */}
-      <div className="glass-card" style={{ padding: '1.5rem' }}>
+      <div className="glass-card" style={{ padding: 'clamp(1rem, 3.5vw, 1.5rem)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
           <User size={18} style={{ color: 'var(--accent-indigo)' }} />
           <h2 style={{ fontSize: '1.1rem', fontWeight: 750 }}>
@@ -198,7 +198,7 @@ export function Settings({
           {t('contextModesDesc', 'Select your activity persona. Customizes dashboard metric prioritization, advice, and WeatherGPT AI perspectives.')}
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(135px, 28vw, 230px), 1fr))', gap: '0.75rem' }}>
           {CONTEXT_MODES.map((m) => {
             const Icon = MODE_ICONS[m.id] || User;
             const isSelected = userMode === m.id;
@@ -255,7 +255,7 @@ export function Settings({
           <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
             {t('activeCategories', 'Active Categories')}:
           </span>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(135px, 28vw, 220px), 1fr))', gap: '0.5rem' }}>
             {alertCategories.map((cat) => {
               const isChecked = alertPreferences?.types?.[cat.id] ?? true;
               return (
@@ -319,7 +319,7 @@ export function Settings({
           {t('themeDesc', 'Choose your preferred color theme or match your operating system.')}
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(135px, 28vw, 180px), 1fr))', gap: '0.75rem' }}>
           {themeOptions.map((opt) => {
             const Icon = opt.icon;
             const isSelected = theme === opt.id;

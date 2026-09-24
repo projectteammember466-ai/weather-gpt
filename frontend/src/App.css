@@ -218,26 +218,26 @@
 /* Common Grid Layouts */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 }
 
 @media (min-width: 1024px) {
   .dashboard-grid {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 }
 
 .alerts-summary-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   align-items: stretch;
 }
 
 @media (min-width: 1024px) {
   .alerts-summary-grid {
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   }
 }
 
@@ -300,3 +300,43 @@
 .btn-secondary:hover {
   background: var(--surface-hover);
 }
+
+/* Compare Weather Responsive Pickers Grid */
+.compare-pickers-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+@media (max-width: 580px) {
+  .compare-pickers-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile Header & Button Compact Rules */
+@media (max-width: 540px) {
+  .navbar-city-badge {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-subtitle {
+    display: none !important;
+  }
+  .location-btn-text {
+    display: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar-lang-btn {
+    display: none !important;
+  }
+  .navbar-ai-badge {
+    display: none !important;
+  }
+}
+
