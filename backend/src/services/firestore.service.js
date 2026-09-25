@@ -80,12 +80,16 @@ export async function saveSearchHistory(userId, searchData) {
 export async function getSearchHistory(userId, limit = 10) {
   const db = getFirestoreDb();
   if (isFirebaseConfigured() && db) {
-    const snapshot = await db.collection('searchHistory')
-      .where('userId', '==', userId)
-      .orderBy('searchedAt', 'desc')
-      .limit(limit)
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+      const snapshot = await db.collection('searchHistory')
+        .where('userId', '==', userId)
+        .get();
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      docs.sort((a, b) => new Date(b.searchedAt || b.createdAt || 0) - new Date(a.searchedAt || a.createdAt || 0));
+      return docs.slice(0, limit);
+    } catch (err) {
+      console.warn('Firestore getSearchHistory error:', err.message);
+    }
   }
 
   return inMemoryStore.searchHistory
@@ -122,12 +126,16 @@ export async function saveChatMessage(userId, chatData) {
 export async function getChatHistory(userId, limit = 20) {
   const db = getFirestoreDb();
   if (isFirebaseConfigured() && db) {
-    const snapshot = await db.collection('chatHistory')
-      .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+      const snapshot = await db.collection('chatHistory')
+        .where('userId', '==', userId)
+        .get();
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      docs.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return docs.slice(0, limit);
+    } catch (err) {
+      console.warn('Firestore getChatHistory error:', err.message);
+    }
   }
 
   return inMemoryStore.chatHistory
