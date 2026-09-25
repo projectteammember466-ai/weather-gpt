@@ -304,6 +304,22 @@ export async function fetchSearchHistory(userId = 'anonymous', limit = 10) {
   return null;
 }
 
+export async function deleteBackendSearchHistory(searchId, userId = 'anonymous') {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/history/search/${searchId}?userId=${userId}`, {
+      method: 'DELETE',
+      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (err) {
+    console.warn("Backend search history delete error:", err);
+  }
+  return null;
+}
+
 /**
  * User Profile & Settings Sync via Express Backend (Firestore API)
  */
@@ -341,5 +357,6 @@ export default {
   saveDashboardPreferences,
   addSearchHistory,
   fetchSearchHistory,
+  deleteBackendSearchHistory,
   syncUserProfile
 };

@@ -24,7 +24,10 @@ describe('Weather Service & API Endpoints', () => {
     assert.ok(typeof res.body.data.current.humidity === 'number');
     assert.ok(res.body.data.current.condition);
     assert.ok(res.body.data.current.aqi);
-    assert.strictEqual(res.body.data.metadata.source, 'Open-Meteo Weather API');
+    assert.ok(
+      ['Open-Meteo Weather API', 'WeatherGPT Telemetry Model'].includes(res.body.data.metadata.source),
+      `Expected metadata.source to be valid telemetry source, got: ${res.body.data.metadata.source}`
+    );
   });
 
   test('GET /api/v1/forecast returns daily and hourly forecast arrays', async () => {

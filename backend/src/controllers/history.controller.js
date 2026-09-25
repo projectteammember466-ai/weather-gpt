@@ -14,21 +14,55 @@ export async function getSearchHistory(req, res, next) {
 
 export async function addSearchHistory(req, res, next) {
   try {
-    const { userId, query, location, latitude, longitude } = req.body;
+    const { 
+      userId, 
+      query, 
+      rawQuery, 
+      location, 
+      resolvedName, 
+      displayName, 
+      latitude, 
+      longitude, 
+      country, 
+      state, 
+      source, 
+      isCurrentLocation, 
+      weatherSnapshot 
+    } = req.body;
     const targetUserId = userId || 'anonymous';
+    const searchQuery = query || rawQuery;
 
-    if (!query) {
+    if (!searchQuery) {
       return errorResponse(res, 'VALIDATION_ERROR', 'Search query parameter is required', 400);
     }
 
     const result = await firestoreService.saveSearchHistory(targetUserId, {
-      query,
-      location: location || query,
+      query: searchQuery,
+      rawQuery: searchQuery,
+      location: location || resolvedName || displayName || searchQuery,
+      resolvedName: resolvedName || location || searchQuery,
+      displayName: displayName || resolvedName || location || searchQuery,
       latitude,
-      longitude
+      longitude,
+      country,
+      state,
+      source: source || 'open-meteo-geocoding',
+      isCurrentLocation: Boolean(isCurrentLocation),
+      weatherSnapshot: weatherSnapshot || null
     });
 
     return successResponse(res, result, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteSearchHistory(req, res, next) {
+  try {
+    const { searchId } = req.params;
+    const userId = req.query.userId || req.body?.userId || 'anonymous';
+    const result = await firestoreService.deleteSearchHistory(userId, searchId);
+    return successResponse(res, result);
   } catch (err) {
     next(err);
   }
@@ -71,6 +105,7 @@ export async function addChatHistory(req, res, next) {
 export default {
   getSearchHistory,
   addSearchHistory,
+  deleteSearchHistory,
   getChatHistory,
   addChatHistory
 };

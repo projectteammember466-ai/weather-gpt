@@ -140,32 +140,48 @@ export function useWeather(initialCity = 'jodhpur') {
       setClimate(climateRes);
 
       // Persist resolved canonical location to Search History (Local + Backend Firestore)
+      const snapshot = weatherRes?.current ? {
+        temperature: weatherRes.current.temperature,
+        apparentTemperature: weatherRes.current.apparentTemperature ?? weatherRes.current.temperature,
+        condition: weatherRes.current.condition,
+        humidity: weatherRes.current.humidity,
+        windSpeed: weatherRes.current.windSpeed
+      } : null;
+
       const historyRecord = {
         city: canonicalLoc.name,
         country: canonicalLoc.country || 'Location',
         query: rawQueryText || canonicalLoc.name,
+        rawQuery: rawQueryText || canonicalLoc.name,
+        resolvedName: canonicalLoc.name,
         displayName: canonicalLoc.displayName,
         latitude: canonicalLoc.latitude,
         longitude: canonicalLoc.longitude,
+        weatherSnapshot: snapshot,
         timestamp: new Date().toISOString()
       };
 
       setSearchHistory((prev) => {
         const filtered = prev.filter(
-          (item) => (item.city || '').toLowerCase() !== canonicalLoc.name.toLowerCase()
+          (item) => (item.city || item.resolvedName || '').toLowerCase() !== canonicalLoc.name.toLowerCase()
         );
         return [historyRecord, ...filtered].slice(0, 10);
       });
 
       // Async Firestore persistence
       addBackendSearchHistory(userId, {
-        rawQuery: rawQueryText,
+        query: rawQueryText || canonicalLoc.name,
+        rawQuery: rawQueryText || canonicalLoc.name,
         resolvedName: canonicalLoc.name,
         location: canonicalLoc.displayName,
+        displayName: canonicalLoc.displayName,
         latitude: canonicalLoc.latitude,
         longitude: canonicalLoc.longitude,
         country: canonicalLoc.country,
-        state: canonicalLoc.state
+        state: canonicalLoc.state,
+        source: canonicalLoc.source || 'search',
+        isCurrentLocation: Boolean(canonicalLoc.isCurrentLocation),
+        weatherSnapshot: snapshot
       }).catch(() => {});
 
       // Update weather atmosphere CSS on document body
