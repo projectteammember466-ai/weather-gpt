@@ -9,7 +9,9 @@ import weatherRoutes from './routes/weather.routes.js';
 import forecastRoutes from './routes/forecast.routes.js';
 import historicalRoutes from './routes/historical.routes.js';
 import locationRoutes from './routes/location.routes.js';
+import alertRoutes from './routes/alert.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import historyRoutes from './routes/history.routes.js';
 import userRoutes from './routes/user.routes.js';
 
 const app = express();
@@ -17,7 +19,6 @@ const app = express();
 // CORS Configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, or postman)
     if (!origin) return callback(null, true);
 
     const isAllowed = config.corsOrigins.some(allowedOrigin => {
@@ -31,7 +32,7 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
@@ -45,7 +46,9 @@ app.use('/api/v1/weather', weatherRoutes);
 app.use('/api/v1/forecast', forecastRoutes);
 app.use('/api/v1/historical', historicalRoutes);
 app.use('/api/v1/locations', locationRoutes);
+app.use('/api/v1/alerts', alertRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/history', historyRoutes);
 app.use('/api/v1/user', userRoutes);
 
 // Root route summary
@@ -53,7 +56,7 @@ app.get('/', (req, res) => {
   res.json({
     service: "WeatherGPT REST API Backend",
     version: "1.0.0",
-    docs: "/api/v1/health"
+    health: "/api/v1/health"
   });
 });
 

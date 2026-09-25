@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage.js';
+import { addBackendSavedLocation, removeBackendSavedLocation } from '../services/backendApi.js';
 
 export const DEFAULT_SAVED_LOCATIONS = [
   {
@@ -61,6 +62,8 @@ export function useSavedLocations() {
     };
 
     setSavedLocations((prev) => [normalized, ...prev]);
+    // Async background sync with Express Firestore gateway
+    addBackendSavedLocation(normalized).catch(() => {});
     return true;
   }, [isSaved, setSavedLocations]);
 
@@ -70,6 +73,8 @@ export function useSavedLocations() {
     setSavedLocations((prev) =>
       prev.filter((loc) => (loc.city || loc.name || '').trim().toLowerCase() !== clean)
     );
+    // Async background sync with Express Firestore gateway
+    removeBackendSavedLocation(cityName).catch(() => {});
   }, [setSavedLocations]);
 
   const toggleLocation = useCallback((loc) => {

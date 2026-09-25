@@ -3,6 +3,17 @@ import userController from '../controllers/user.controller.js';
 
 const router = Router();
 
+// Settings (Section 20 & 29)
+router.get('/settings', userController.getSettings);
+router.get('/settings/:userId', userController.getSettings);
+router.patch('/settings', userController.updateSettings);
+router.put('/settings', userController.updateSettings);
+
+// Dashboard Preferences
+router.get('/dashboard-preferences', userController.getDashboardPreferences);
+router.get('/dashboard-preferences/:userId', userController.getDashboardPreferences);
+router.patch('/dashboard-preferences', userController.updateDashboardPreferences);
+
 // Profile
 router.put('/profile', userController.updateProfile);
 router.get('/profile/:userId', userController.getProfile);

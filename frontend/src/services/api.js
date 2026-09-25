@@ -6,6 +6,14 @@ import { getMockAlerts } from '../data/alertData.js';
 import { generateAIChatResponse } from '../data/chatData.js';
 import { getMockClimate } from '../data/climateData.js';
 import { chatWithGeminiAndWeatherTools } from './geminiService.js';
+import {
+  fetchBackendWeather,
+  fetchBackendForecast,
+  fetchBackendHistorical,
+  searchBackendLocations,
+  fetchBackendAlerts,
+  postBackendChat
+} from './backendApi.js';
 
 // Simulated async delay
 const mockDelay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -39,6 +47,17 @@ export async function searchGeocoding(query) {
 
   if (geocodeCache.has(cleanQuery)) {
     return geocodeCache.get(cleanQuery);
+  }
+
+  // Attempt Express Backend location search gateway first
+  try {
+    const backendResults = await searchBackendLocations(query);
+    if (backendResults && backendResults.length > 0) {
+      geocodeCache.set(cleanQuery, backendResults);
+      return backendResults;
+    }
+  } catch (err) {
+    console.warn("Backend geocoding gateway unavailable, trying direct Open-Meteo REST:", err);
   }
 
   try {
@@ -210,6 +229,34 @@ export async function fetchAirQualityByCoords(lat, lon) {
 // 3. Open-Meteo Weather API by Coordinates
 export async function fetchWeatherByCoords(lat, lon, locationName = 'Selected Location', region = '', country = '') {
   const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+
+  // Attempt Express Backend weather gateway first
+  try {
+    const backendData = await fetchBackendWeather(lat, lon, locationName);
+    if (backendData && backendData.current) {
+      // Ensure location object properties match frontend component expectations
+      const normalizedBackend = {
+        ...backendData,
+        location: {
+          id: `loc-${lat.toFixed(2)}-${lon.toFixed(2)}`,
+          name: locationName,
+          city: locationName,
+          region: region || country || 'Region',
+          state: region || country,
+          country: country || 'Global Station',
+          lat: lat,
+          lon: lon,
+          latitude: lat,
+          longitude: lon,
+          ...backendData.location
+        }
+      };
+      weatherCoordsCache.set(cacheKey, normalizedBackend);
+      return normalizedBackend;
+    }
+  } catch (err) {
+    console.warn("Backend weather gateway unavailable, trying direct Open-Meteo REST:", err);
+  }
   
   try {
     const [weatherRes, aqiRes] = await Promise.all([
@@ -423,6 +470,47 @@ export async function fetchAlerts(city = "jodhpur") {
 }
 
 export async function postChatMessage(userQuery, weatherData, lang = 'en', priorContext = {}) {
+  // Attempt Express backend chat gateway first
+  try {
+    const locObj = weatherData?.location || { name: 'Jodhpur' };
+    const backendChat = await postBackendChat(userQuery, locObj, priorContext?.userMode || 'general', lang);
+    if (backendChat && backendChat.reply) {
+      const primaryCity = backendChat.location || weatherData?.location?.city || weatherData?.location?.name || 'Location';
+      return {
+        id: `msg-ai-${Date.now()}`,
+        sender: 'assistant',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text: backendChat.reply,
+        understanding: {
+          location: primaryCity,
+          intent: backendChat.intent || 'CURRENT_WEATHER',
+          intentLabel: backendChat.intent || 'Current Weather',
+          topic: 'Live Atmospheric Observation',
+          status: 'Analyzed'
+        },
+        richContent: {
+          city: primaryCity,
+          temp: weatherData?.current?.temperature ? `${weatherData.current.temperature}°C` : '30°C',
+          condition: weatherData?.current?.condition || 'Clear Sky',
+          rawCondition: weatherData?.current?.condition || 'Clear Sky',
+          rainProbability: weatherData?.current?.rainProbability ? `${weatherData.current.rainProbability}%` : '10%',
+          humidity: weatherData?.current?.humidity ? `${weatherData.current.humidity}%` : '45%',
+          wind: weatherData?.current?.windSpeed ? `${weatherData.current.windSpeed} km/h` : '12 km/h',
+          highLow: `${weatherData?.current?.highTemp || 33}°C / ${weatherData?.current?.lowTemp || 23}°C`,
+          aqi: `${weatherData?.current?.aqi || 80}`,
+          uvIndex: `${weatherData?.current?.uvIndex || 6}`,
+          contextMode: priorContext?.userMode || 'general',
+          contextLabel: (priorContext?.userMode || 'general').toUpperCase(),
+          aiGuidance: "Express REST Gateway Grounded Synthesis",
+          sourcesUsed: ["Express Backend API Gateway", "WeatherGPT AI Engine"],
+          aiExplanationLabel: "WeatherGPT AI (Express REST Gateway)"
+        }
+      };
+    }
+  } catch (err) {
+    console.warn("Backend chat gateway unavailable, using client-side Gemini fallback:", err);
+  }
+
   try {
     return await chatWithGeminiAndWeatherTools(userQuery, weatherData, lang, priorContext);
   } catch (err) {
@@ -527,6 +615,17 @@ export async function fetchHistoricalWeather(lat = 26.2389, lon = 73.0243, start
   const cacheKey = `hist-${Number(lat).toFixed(2)}-${Number(lon).toFixed(2)}-${startDate}-${endDate}`;
   if (historicalCache.has(cacheKey)) {
     return historicalCache.get(cacheKey);
+  }
+
+  // Attempt Express backend historical gateway first
+  try {
+    const backendHist = await fetchBackendHistorical(lat, lon, startDate, endDate, locationName);
+    if (backendHist && backendHist.daily && backendHist.daily.length > 0) {
+      historicalCache.set(cacheKey, backendHist);
+      return backendHist;
+    }
+  } catch (err) {
+    console.warn("Backend historical gateway unavailable, trying direct Open-Meteo Archive API:", err);
   }
 
   try {
