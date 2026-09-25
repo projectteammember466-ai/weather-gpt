@@ -29,6 +29,55 @@ export const DEFAULT_SECTION_VISIBILITY = {
   climate: true
 };
 
+const KEY_MAP = {
+  hero: 'currentWeather',
+  currentWeather: 'currentWeather',
+  details: 'weatherDetails',
+  weatherDetails: 'weatherDetails',
+  guidance: 'smartGuidance',
+  smartGuidance: 'smartGuidance',
+  hourly: 'weatherTimeline',
+  weatherTimeline: 'weatherTimeline',
+  chart: 'weatherChart',
+  weatherChart: 'weatherChart',
+  daily: 'dailyForecast',
+  dailyForecast: 'dailyForecast',
+  alerts: 'alertsAndSummary',
+  summary: 'alertsAndSummary',
+  alertsAndSummary: 'alertsAndSummary',
+  astronomy: 'sunMoon',
+  sunMoon: 'sunMoon',
+  map: 'weatherMap',
+  weatherMap: 'weatherMap',
+  climate: 'climate'
+};
+
+function normalizeSectionOrder(orderArr) {
+  if (!Array.isArray(orderArr)) return DEFAULT_SECTION_ORDER;
+  const mapped = orderArr.map((k) => KEY_MAP[k] || k);
+  const unique = Array.from(new Set(mapped));
+  DEFAULT_SECTION_ORDER.forEach((k) => {
+    if (!unique.includes(k)) unique.push(k);
+  });
+  return unique;
+}
+
+function normalizeVisibility(visInput) {
+  const result = { ...DEFAULT_SECTION_VISIBILITY };
+  if (Array.isArray(visInput)) {
+    visInput.forEach((k) => {
+      const mapped = KEY_MAP[k] || k;
+      result[mapped] = true;
+    });
+  } else if (visInput && typeof visInput === 'object') {
+    Object.entries(visInput).forEach(([k, val]) => {
+      const mapped = KEY_MAP[k] || k;
+      result[mapped] = Boolean(val);
+    });
+  }
+  return result;
+}
+
 export function useDashboardPreferences() {
   const userId = getOrCreateUserId();
 
@@ -49,10 +98,10 @@ export function useDashboardPreferences() {
       const remoteData = await fetchDashboardPreferences(userId);
       if (isMounted && remoteData) {
         if (remoteData.visibleSections) {
-          setPreferences(remoteData.visibleSections);
+          setPreferences(normalizeVisibility(remoteData.visibleSections));
         }
         if (remoteData.sectionOrder && Array.isArray(remoteData.sectionOrder)) {
-          setSectionOrder(remoteData.sectionOrder);
+          setSectionOrder(normalizeSectionOrder(remoteData.sectionOrder));
         }
       }
     }

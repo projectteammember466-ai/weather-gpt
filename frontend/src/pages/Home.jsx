@@ -161,8 +161,9 @@ export function Home({
 
             switch (sectionKey) {
               case 'currentWeather':
+              case 'hero':
                 return (
-                  <section key="currentWeather">
+                  <section key={sectionKey}>
                     <WeatherHero 
                       weather={weather} 
                       tempUnit={tempUnit} 
@@ -179,15 +180,17 @@ export function Home({
                 );
 
               case 'weatherDetails':
+              case 'details':
                 return (
-                  <section key="weatherDetails">
+                  <section key={sectionKey}>
                     <WeatherDetails current={weather.current} t={t} />
                   </section>
                 );
 
               case 'smartGuidance':
+              case 'guidance':
                 return (
-                  <section key="smartGuidance">
+                  <section key={sectionKey}>
                     <SmartWeatherGuidance 
                       weather={weather}
                       forecast={forecast}
@@ -199,8 +202,9 @@ export function Home({
                 );
 
               case 'weatherTimeline':
+              case 'hourly':
                 return (
-                  <section key="weatherTimeline">
+                  <section key={sectionKey}>
                     <WeatherTimeline 
                       hourly={forecast?.hourly}
                       tempUnit={tempUnit}
@@ -213,22 +217,26 @@ export function Home({
                 );
 
               case 'weatherChart':
+              case 'chart':
                 return (
-                  <section key="weatherChart">
+                  <section key={sectionKey}>
                     <WeatherChart hourly={forecast?.hourly} tempUnit={tempUnit} lang={lang} t={t} />
                   </section>
                 );
 
               case 'dailyForecast':
+              case 'daily':
                 return (
-                  <section key="dailyForecast">
+                  <section key={sectionKey}>
                     <DailyForecast daily={forecast?.daily} tempUnit={tempUnit} lang={lang} t={t} />
                   </section>
                 );
 
               case 'alertsAndSummary':
+              case 'alerts':
+              case 'summary':
                 return (
-                  <section key="alertsAndSummary" className="alerts-summary-grid">
+                  <section key={sectionKey} className="alerts-summary-grid">
                     <div>
                       <AlertDetails alerts={alerts} city={weather.location.city} t={t} />
                     </div>
@@ -239,8 +247,9 @@ export function Home({
                 );
 
               case 'sunMoon':
+              case 'astronomy':
                 return (
-                  <section key="sunMoon">
+                  <section key={sectionKey}>
                     <SunMoonCard 
                       current={weather.current}
                       lang={lang}
@@ -250,8 +259,9 @@ export function Home({
                 );
 
               case 'weatherMap':
+              case 'map':
                 return (
-                  <section key="weatherMap" style={{ marginTop: '0.5rem' }}>
+                  <section key={sectionKey} style={{ marginTop: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <div>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
@@ -289,7 +299,7 @@ export function Home({
 
               case 'climate':
                 return (
-                  <section key="climate" style={{ marginTop: '0.5rem' }}>
+                  <section key={sectionKey} style={{ marginTop: '0.5rem' }}>
                     <ClimateSummary 
                       climate={climate} 
                       tempUnit={tempUnit} 

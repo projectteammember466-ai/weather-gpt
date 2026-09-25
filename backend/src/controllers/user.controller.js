@@ -89,10 +89,36 @@ export async function getDashboardPreferences(req, res, next) {
       }
     }
 
+    const defaultOrder = [
+      'currentWeather',
+      'weatherDetails',
+      'smartGuidance',
+      'weatherTimeline',
+      'weatherChart',
+      'dailyForecast',
+      'alertsAndSummary',
+      'sunMoon',
+      'weatherMap',
+      'climate'
+    ];
+
+    const defaultVisibility = {
+      currentWeather: true,
+      weatherDetails: true,
+      smartGuidance: true,
+      weatherTimeline: true,
+      weatherChart: true,
+      dailyForecast: true,
+      alertsAndSummary: true,
+      sunMoon: true,
+      weatherMap: true,
+      climate: true
+    };
+
     const fallback = inMemoryDashboardPrefs.get(userId) || {
       userId,
-      visibleSections: ['hero', 'details', 'hourly', 'daily', 'guidance', 'astronomy', 'map', 'climate'],
-      sectionOrder: ['hero', 'details', 'hourly', 'daily', 'guidance', 'astronomy', 'map', 'climate'],
+      visibleSections: defaultVisibility,
+      sectionOrder: defaultOrder,
       updatedAt: new Date().toISOString()
     };
 
@@ -107,10 +133,36 @@ export async function updateDashboardPreferences(req, res, next) {
     const { userId, visibleSections, sectionOrder } = req.body;
     const targetUserId = userId || req.query.userId || 'anonymous';
 
+    const defaultOrder = [
+      'currentWeather',
+      'weatherDetails',
+      'smartGuidance',
+      'weatherTimeline',
+      'weatherChart',
+      'dailyForecast',
+      'alertsAndSummary',
+      'sunMoon',
+      'weatherMap',
+      'climate'
+    ];
+
+    const defaultVisibility = {
+      currentWeather: true,
+      weatherDetails: true,
+      smartGuidance: true,
+      weatherTimeline: true,
+      weatherChart: true,
+      dailyForecast: true,
+      alertsAndSummary: true,
+      sunMoon: true,
+      weatherMap: true,
+      climate: true
+    };
+
     const payload = {
       userId: targetUserId,
-      visibleSections: visibleSections || ['hero', 'details', 'hourly', 'daily', 'guidance', 'astronomy', 'map', 'climate'],
-      sectionOrder: sectionOrder || ['hero', 'details', 'hourly', 'daily', 'guidance', 'astronomy', 'map', 'climate'],
+      visibleSections: visibleSections || defaultVisibility,
+      sectionOrder: sectionOrder || defaultOrder,
       updatedAt: new Date().toISOString()
     };
 

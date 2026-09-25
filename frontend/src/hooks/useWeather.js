@@ -217,6 +217,12 @@ export function useWeather(initialCity = 'jodhpur') {
     }
   }, [userId, setSearchHistory]);
 
+  // Trigger initial weather data fetch on mount
+  useEffect(() => {
+    loadWeatherData(location);
+    // eslint-disable-next-deps
+  }, []);
+
   /**
    * Request Browser Geolocation & center map + weather on exact detected coordinates
    */
