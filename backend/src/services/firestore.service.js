@@ -58,10 +58,14 @@ export async function getUser(userId) {
 export async function saveSearchHistory(userId, searchData) {
   const record = {
     userId: userId || 'anonymous',
-    query: searchData.query || '',
-    location: searchData.location || searchData.query || '',
+    rawQuery: searchData.rawQuery || searchData.query || '',
+    query: searchData.resolvedName || searchData.query || searchData.location || '',
+    resolvedName: searchData.resolvedName || searchData.query || '',
+    location: searchData.location || searchData.resolvedName || searchData.query || '',
     latitude: searchData.latitude ?? null,
     longitude: searchData.longitude ?? null,
+    country: searchData.country || '',
+    state: searchData.state || searchData.region || '',
     searchedAt: new Date().toISOString()
   };
 

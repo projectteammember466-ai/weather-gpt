@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage.js';
+import { fetchDashboardPreferences, saveDashboardPreferences } from '../services/backendApi.js';
+import { getOrCreateUserId } from '../utils/userId.js';
 
 export const DEFAULT_SECTION_ORDER = [
   'currentWeather',
@@ -28,6 +30,8 @@ export const DEFAULT_SECTION_VISIBILITY = {
 };
 
 export function useDashboardPreferences() {
+  const userId = getOrCreateUserId();
+
   const [preferences, setPreferences] = useLocalStorage(
     'weathergpt_dashboard_preferences',
     DEFAULT_SECTION_VISIBILITY
@@ -38,12 +42,37 @@ export function useDashboardPreferences() {
     DEFAULT_SECTION_ORDER
   );
 
+  // Sync from backend on initial mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadRemotePreferences() {
+      const remoteData = await fetchDashboardPreferences(userId);
+      if (isMounted && remoteData) {
+        if (remoteData.visibleSections) {
+          setPreferences(remoteData.visibleSections);
+        }
+        if (remoteData.sectionOrder && Array.isArray(remoteData.sectionOrder)) {
+          setSectionOrder(remoteData.sectionOrder);
+        }
+      }
+    }
+    loadRemotePreferences();
+    return () => { isMounted = false; };
+  }, [userId, setPreferences, setSectionOrder]);
+
   const toggleSection = useCallback((sectionKey) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [sectionKey]: prev[sectionKey] === false ? true : false
-    }));
-  }, [setPreferences]);
+    setPreferences((prev) => {
+      const updated = {
+        ...prev,
+        [sectionKey]: prev[sectionKey] === false ? true : false
+      };
+      saveDashboardPreferences(userId, {
+        visibleSections: updated,
+        sectionOrder
+      });
+      return updated;
+    });
+  }, [userId, sectionOrder, setPreferences]);
 
   const moveSection = useCallback((index, direction) => {
     setSectionOrder((prev) => {
@@ -54,14 +83,24 @@ export function useDashboardPreferences() {
       const temp = newOrder[index];
       newOrder[index] = newOrder[targetIndex];
       newOrder[targetIndex] = temp;
+
+      saveDashboardPreferences(userId, {
+        visibleSections: preferences,
+        sectionOrder: newOrder
+      });
+
       return newOrder;
     });
-  }, [setSectionOrder]);
+  }, [userId, preferences, setSectionOrder]);
 
   const resetPreferences = useCallback(() => {
     setPreferences(DEFAULT_SECTION_VISIBILITY);
     setSectionOrder(DEFAULT_SECTION_ORDER);
-  }, [setPreferences, setSectionOrder]);
+    saveDashboardPreferences(userId, {
+      visibleSections: DEFAULT_SECTION_VISIBILITY,
+      sectionOrder: DEFAULT_SECTION_ORDER
+    });
+  }, [userId, setPreferences, setSectionOrder]);
 
   return {
     preferences,

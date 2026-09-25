@@ -14,6 +14,7 @@ import {
   fetchBackendAlerts,
   postBackendChat
 } from './backendApi.js';
+import { getOrCreateUserId } from '../utils/userId.js';
 
 // Simulated async delay
 const mockDelay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -473,7 +474,8 @@ export async function postChatMessage(userQuery, weatherData, lang = 'en', prior
   // Attempt Express backend chat gateway first
   try {
     const locObj = weatherData?.location || { name: 'Jodhpur' };
-    const backendChat = await postBackendChat(userQuery, locObj, priorContext?.userMode || 'general', lang);
+    const userId = getOrCreateUserId();
+    const backendChat = await postBackendChat(userQuery, locObj, priorContext?.userMode || 'general', lang, userId);
     if (backendChat && backendChat.reply) {
       const primaryCity = backendChat.location || weatherData?.location?.city || weatherData?.location?.name || 'Location';
       return {

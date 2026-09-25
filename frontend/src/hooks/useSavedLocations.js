@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage.js';
-import { addBackendSavedLocation, removeBackendSavedLocation } from '../services/backendApi.js';
+import { addBackendSavedLocation, removeBackendSavedLocation, fetchBackendSavedLocations } from '../services/backendApi.js';
+import { getOrCreateUserId } from '../utils/userId.js';
 
 export const DEFAULT_SAVED_LOCATIONS = [
   {
@@ -33,7 +34,21 @@ export const DEFAULT_SAVED_LOCATIONS = [
 ];
 
 export function useSavedLocations() {
+  const userId = getOrCreateUserId();
   const [savedLocations, setSavedLocations] = useLocalStorage('weathergpt_saved_locations', DEFAULT_SAVED_LOCATIONS);
+
+  // Sync from backend on initial mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadRemoteSavedLocations() {
+      const remoteLocations = await fetchBackendSavedLocations(userId);
+      if (isMounted && Array.isArray(remoteLocations) && remoteLocations.length > 0) {
+        setSavedLocations(remoteLocations);
+      }
+    }
+    loadRemoteSavedLocations();
+    return () => { isMounted = false; };
+  }, [userId, setSavedLocations]);
 
   const isSaved = useCallback((cityName) => {
     if (!cityName) return false;
@@ -63,9 +78,9 @@ export function useSavedLocations() {
 
     setSavedLocations((prev) => [normalized, ...prev]);
     // Async background sync with Express Firestore gateway
-    addBackendSavedLocation(normalized).catch(() => {});
+    addBackendSavedLocation(normalized, userId).catch(() => {});
     return true;
-  }, [isSaved, setSavedLocations]);
+  }, [isSaved, setSavedLocations, userId]);
 
   const removeLocation = useCallback((cityName) => {
     if (!cityName) return;
@@ -74,8 +89,8 @@ export function useSavedLocations() {
       prev.filter((loc) => (loc.city || loc.name || '').trim().toLowerCase() !== clean)
     );
     // Async background sync with Express Firestore gateway
-    removeBackendSavedLocation(cityName).catch(() => {});
-  }, [setSavedLocations]);
+    removeBackendSavedLocation(cityName, userId).catch(() => {});
+  }, [setSavedLocations, userId]);
 
   const toggleLocation = useCallback((loc) => {
     if (!loc) return false;

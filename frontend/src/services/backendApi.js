@@ -228,6 +228,103 @@ export async function removeBackendSavedLocation(locationId, userId = 'anonymous
   }
 }
 
+/**
+ * Dashboard Preferences Synchronization via Express Backend (Firestore API)
+ */
+export async function fetchDashboardPreferences(userId = 'anonymous') {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/user/dashboard-preferences?userId=${userId}`, {
+      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn("Backend dashboard preferences fetch error:", err);
+  }
+  return null;
+}
+
+export async function saveDashboardPreferences(userId = 'anonymous', preferences = {}) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/user/dashboard-preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, ...preferences }),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (err) {
+    console.warn("Backend dashboard preferences save error:", err);
+  }
+  return null;
+}
+
+/**
+ * Search History Persistence via Express Backend (Firestore API)
+ */
+export async function addSearchHistory(userId = 'anonymous', searchData = {}) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/history/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, ...searchData }),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (err) {
+    console.warn("Backend search history save error:", err);
+  }
+  return null;
+}
+
+export async function fetchSearchHistory(userId = 'anonymous', limit = 10) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/history/search?userId=${userId}&limit=${limit}`, {
+      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn("Backend search history fetch error:", err);
+  }
+  return null;
+}
+
+/**
+ * User Profile & Settings Sync via Express Backend (Firestore API)
+ */
+export async function syncUserProfile(userId = 'anonymous', userData = {}) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/user/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, ...userData }),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (err) {
+    console.warn("Backend profile sync error:", err);
+  }
+  return null;
+}
+
 export default {
   checkBackendHealth,
   isBackendOnline,
@@ -239,5 +336,10 @@ export default {
   postBackendChat,
   fetchBackendSavedLocations,
   addBackendSavedLocation,
-  removeBackendSavedLocation
+  removeBackendSavedLocation,
+  fetchDashboardPreferences,
+  saveDashboardPreferences,
+  addSearchHistory,
+  fetchSearchHistory,
+  syncUserProfile
 };

@@ -219,7 +219,7 @@ export function WeatherMap({
   }, [resolvedCoords.lat, resolvedCoords.lon, resolvedCoords.name]);
 
   // Helper to generate dynamic divIcon HTML for Leaflet markers based on active layer
-  const createMarkerIcon = (stationName, stationData, isSelected) => {
+  const createMarkerIcon = (stationName, stationData, isSelected, isCurrent = false) => {
     let layerValue = formatTemperature(stationData.temp !== undefined ? stationData.temp : centerWeatherData.temp, tempUnit);
     
     if (activeLayer === 'rain') {
@@ -234,9 +234,16 @@ export function WeatherMap({
       layerValue = stationData.hasAlert ? 'ALERT' : 'Normal';
     }
 
+    const isCurrentLoc = isCurrent || location?.isCurrentLocation;
+    const pinClass = isCurrentLoc 
+      ? 'map-marker-pin map-marker-selected' 
+      : isSelected 
+        ? 'map-marker-pin map-marker-selected' 
+        : 'map-marker-pin map-marker-nearby';
+
     const htmlContent = `
-      <div class="map-marker-pin ${isSelected ? 'map-marker-selected' : 'map-marker-nearby'}">
-        <span style="font-weight: 700;">${stationName}</span>
+      <div class="${pinClass}" style="${isCurrentLoc ? 'border: 2px solid #22c55e; background: rgba(34, 197, 94, 0.9); box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);' : ''}">
+        <span style="font-weight: 700;">${isCurrentLoc ? '📍 Your Current Location' : stationName}</span>
         <strong style="margin-left: 2px;">${layerValue}</strong>
       </div>
     `;
@@ -244,8 +251,8 @@ export function WeatherMap({
     return L.divIcon({
       className: 'leaflet-custom-icon',
       html: htmlContent,
-      iconSize: [130, 36],
-      iconAnchor: [65, 18]
+      iconSize: [150, 36],
+      iconAnchor: [75, 18]
     });
   };
 

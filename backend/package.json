@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test src/tests/health.test.js src/tests/validation.test.js src/tests/weather.service.test.js src/tests/location.service.test.js src/tests/firestore.service.test.js src/tests/firestore.real.test.js src/tests/master.routes.test.js"
+    "test": "node --test src/tests/health.test.js src/tests/validation.test.js src/tests/weather.service.test.js src/tests/location.service.test.js src/tests/firestore.service.test.js src/tests/firestore.real.test.js src/tests/persistence.real.test.js src/tests/master.routes.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

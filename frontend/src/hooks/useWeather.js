@@ -1,18 +1,33 @@
-// Weather State Management Hook (Enhanced for A11-A22)
+// Weather State Management Hook with Authoritative Canonical Location Model & Stale-Response Protection
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  fetchWeather, 
   fetchForecast, 
   fetchAlerts, 
   fetchClimate, 
   fetchWeatherByCoords, 
-  reverseGeocodeCoords 
+  reverseGeocodeCoords,
+  searchGeocoding
 } from '../services/api';
 import { useLocalStorage } from './useLocalStorage';
+import { createCanonicalLocation } from '../utils/locationModel';
+import { getOrCreateUserId } from '../utils/userId';
+import { addSearchHistory as addBackendSearchHistory, syncUserProfile } from '../services/backendApi';
 
 export function useWeather(initialCity = 'jodhpur') {
-  const [city, setCity] = useState(initialCity);
+  const userId = getOrCreateUserId();
+  
+  // Initial canonical location setup
+  const [location, setLocation] = useState(() => 
+    createCanonicalLocation({
+      name: typeof initialCity === 'string' ? initialCity : initialCity?.name || 'Jodhpur',
+      latitude: initialCity?.latitude || initialCity?.lat || 26.2389,
+      longitude: initialCity?.longitude || initialCity?.lon || 73.0243,
+      country: 'India',
+      state: 'Rajasthan'
+    })
+  );
+
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [alerts, setAlerts] = useState([]);
@@ -21,14 +36,14 @@ export function useWeather(initialCity = 'jodhpur') {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Settings preferences persisted in localStorage
-  const [tempUnit, setTempUnit] = useLocalStorage('weathergpt_temp_unit', 'C'); // 'C' | 'F'
-  const [windUnit, setWindUnit] = useLocalStorage('weathergpt_wind_unit', 'kmh'); // 'kmh' | 'mph'
+  // Settings preferences persisted in localStorage & synced
+  const [tempUnit, setTempUnit] = useLocalStorage('weathergpt_temp_unit', 'C');
+  const [windUnit, setWindUnit] = useLocalStorage('weathergpt_wind_unit', 'kmh');
 
-  // User Context Mode (A17): 'general' | 'farmer' | 'traveler' | 'outdoor' | 'emergency'
+  // User Context Mode
   const [userMode, setUserMode] = useLocalStorage('weathergpt_user_mode', 'general');
 
-  // Smart Alert Preferences (A20)
+  // Smart Alert Preferences
   const [alertPreferences, setAlertPreferences] = useLocalStorage('weathergpt_alert_prefs', {
     types: {
       heavyRain: true,
@@ -38,61 +53,123 @@ export function useWeather(initialCity = 'jodhpur') {
       poorAQI: true,
       extremeCold: true
     },
-    frequency: 'immediate' // 'immediate' | 'important' | 'daily'
+    frequency: 'immediate'
   });
 
-  // History state
+  // Search history state
   const [searchHistory, setSearchHistory] = useLocalStorage('weathergpt_search_history', []);
 
   // Location Geolocation state
   const [geoState, setGeoState] = useState({ status: 'idle', message: '', coords: null });
 
-  // Map layer state (A18)
-  const [mapLayer, setMapLayer] = useState('temperature'); // 'temperature' | 'rain' | 'wind' | 'clouds' | 'alerts' | 'aqi'
+  // Map layer state
+  const [mapLayer, setMapLayer] = useState('temperature');
 
-  const lastLoadedCityRef = useRef('');
+  // Sequence token / request counter ref to prevent race conditions from stale requests
+  const requestIdRef = useRef(0);
   const isLocatingRef = useRef(false);
 
-  const loadWeatherData = useCallback(async (targetCity) => {
-    if (!targetCity) return;
-    if (lastLoadedCityRef.current && lastLoadedCityRef.current === targetCity.toLowerCase()) {
-      return;
-    }
-    lastLoadedCityRef.current = targetCity.toLowerCase();
+  // Ensure user profile document exists in Firestore on load
+  useEffect(() => {
+    syncUserProfile(userId, {
+      language: 'en',
+      temperatureUnit: tempUnit === 'C' ? 'celsius' : 'fahrenheit',
+      contextMode: userMode
+    }).catch(() => {});
+  }, [userId, tempUnit, userMode]);
+
+  /**
+   * Load Weather Data for a target (string query or Canonical Location object)
+   */
+  const loadWeatherData = useCallback(async (target) => {
+    if (!target) return;
+    
+    // Increment request ID sequence token
+    const currentRequestId = ++requestIdRef.current;
+    
     setLoading(true);
     setError(null);
 
     try {
-      const weatherRes = await fetchWeather(targetCity);
-      const forecastRes = await fetchForecast(targetCity, weatherRes.current.temperature);
-      const alertsRes = await fetchAlerts(targetCity);
-      const climateRes = await fetchClimate(targetCity);
+      let canonicalLoc = null;
+      let rawQueryText = '';
 
+      if (typeof target === 'object' && target !== null && (target.latitude || target.lat)) {
+        canonicalLoc = createCanonicalLocation(target);
+        rawQueryText = target.displayName || target.name || '';
+      } else if (typeof target === 'string') {
+        rawQueryText = target.trim();
+        // Resolve canonical coordinates via geocoding
+        const geocoded = await searchGeocoding(rawQueryText);
+        if (geocoded && geocoded.length > 0) {
+          canonicalLoc = createCanonicalLocation(geocoded[0]);
+        } else {
+          // Fallback location object
+          canonicalLoc = createCanonicalLocation({
+            name: rawQueryText,
+            latitude: 26.2389,
+            longitude: 73.0243,
+            country: 'India'
+          });
+        }
+      }
+
+      if (!canonicalLoc) return;
+
+      // Stale response guard
+      if (currentRequestId !== requestIdRef.current) {
+        console.warn(`[useWeather] Stale request #${currentRequestId} discarded for #${requestIdRef.current}`);
+        return;
+      }
+
+      const { latitude, longitude, name, state, country } = canonicalLoc;
+
+      // Fetch live telemetry using exact canonical coordinates
+      const weatherRes = await fetchWeatherByCoords(latitude, longitude, name, state, country);
+      const forecastRes = await fetchForecast(name, weatherRes.current.temperature);
+      const alertsRes = await fetchAlerts(name);
+      const climateRes = await fetchClimate(name);
+
+      // Check stale guard again after async fetches
+      if (currentRequestId !== requestIdRef.current) return;
+
+      setLocation(canonicalLoc);
       setWeather(weatherRes);
       setForecast(forecastRes);
       setAlerts(alertsRes);
       setClimate(climateRes);
 
-      // Save to search history if valid
-      if (weatherRes?.location?.city) {
-        setSearchHistory((prev) => {
-          const filtered = prev.filter(
-            (item) => item.city.toLowerCase() !== weatherRes.location.city.toLowerCase()
-          );
-          return [
-            {
-              city: weatherRes.location.city,
-              country: weatherRes.location.country,
-              query: targetCity,
-              timestamp: new Date().toISOString()
-            },
-            ...filtered
-          ].slice(0, 10);
-        });
-      }
+      // Persist resolved canonical location to Search History (Local + Backend Firestore)
+      const historyRecord = {
+        city: canonicalLoc.name,
+        country: canonicalLoc.country || 'Location',
+        query: rawQueryText || canonicalLoc.name,
+        displayName: canonicalLoc.displayName,
+        latitude: canonicalLoc.latitude,
+        longitude: canonicalLoc.longitude,
+        timestamp: new Date().toISOString()
+      };
 
-      // Update weather atmosphere on document body
-      const cond = weatherRes.current.condition.toLowerCase();
+      setSearchHistory((prev) => {
+        const filtered = prev.filter(
+          (item) => (item.city || '').toLowerCase() !== canonicalLoc.name.toLowerCase()
+        );
+        return [historyRecord, ...filtered].slice(0, 10);
+      });
+
+      // Async Firestore persistence
+      addBackendSearchHistory(userId, {
+        rawQuery: rawQueryText,
+        resolvedName: canonicalLoc.name,
+        location: canonicalLoc.displayName,
+        latitude: canonicalLoc.latitude,
+        longitude: canonicalLoc.longitude,
+        country: canonicalLoc.country,
+        state: canonicalLoc.state
+      }).catch(() => {});
+
+      // Update weather atmosphere CSS on document body
+      const cond = (weatherRes.current?.condition || '').toLowerCase();
       document.body.classList.remove(
         'weather-sunny', 'weather-cloudy', 'weather-rain', 
         'weather-storm', 'weather-snow', 'weather-night'
@@ -113,21 +190,21 @@ export function useWeather(initialCity = 'jodhpur') {
       }
 
     } catch (err) {
-      console.error("Failed to load weather data:", err);
-      setError(err.message || "Weather data couldn't be loaded. Please check your query or try again.");
+      if (currentRequestId === requestIdRef.current) {
+        console.error("Failed to load weather data:", err);
+        setError(err.message || "Weather data couldn't be loaded. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      if (currentRequestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
-  }, [setSearchHistory]);
+  }, [userId, setSearchHistory]);
 
-  useEffect(() => {
-    loadWeatherData(city);
-  }, [city, loadWeatherData]);
-
-  // Request browser geolocation & map directly to real coordinates & location
-  // Guarded against duplicate requests and repeated permission loops
+  /**
+   * Request Browser Geolocation & center map + weather on exact detected coordinates
+   */
   const requestLocation = useCallback(() => {
-    // Duplicate request protection: if a location request is already in progress, ignore
     if (isLocatingRef.current) {
       console.warn("Geolocation request already in progress. Ignoring duplicate trigger.");
       return;
@@ -144,68 +221,76 @@ export function useWeather(initialCity = 'jodhpur') {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        const currentRequestId = ++requestIdRef.current;
         setLoading(true);
         setError(null);
+
         try {
           // Reverse geocode coords to get city, region, country
           const geoInfo = await reverseGeocodeCoords(latitude, longitude);
           const detectedCity = geoInfo.city || `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
 
-          // Fetch real Open-Meteo live weather data for these exact coordinates
+          const canonicalLoc = createCanonicalLocation({
+            id: `curr-${latitude.toFixed(4)}-${longitude.toFixed(4)}`,
+            name: detectedCity,
+            city: detectedCity,
+            displayName: geoInfo.region ? `${detectedCity}, ${geoInfo.region}, ${geoInfo.country}` : `${detectedCity}, ${geoInfo.country}`,
+            latitude,
+            longitude,
+            region: geoInfo.region,
+            state: geoInfo.region,
+            country: geoInfo.country,
+            isCurrentLocation: true
+          });
+
+          // Fetch real Open-Meteo live weather data for exact coordinates
           const weatherRes = await fetchWeatherByCoords(latitude, longitude, detectedCity, geoInfo.region, geoInfo.country);
           const forecastRes = await fetchForecast(detectedCity, weatherRes.current.temperature);
           const alertsRes = await fetchAlerts(detectedCity);
           const climateRes = await fetchClimate(detectedCity);
 
-          lastLoadedCityRef.current = detectedCity.toLowerCase();
+          if (currentRequestId !== requestIdRef.current) return;
+
+          setLocation(canonicalLoc);
           setWeather(weatherRes);
           setForecast(forecastRes);
           setAlerts(alertsRes);
           setClimate(climateRes);
-          setCity(detectedCity);
 
           setGeoState({
             status: 'success',
-            message: `Location detected: ${detectedCity}${geoInfo.region && geoInfo.region !== detectedCity ? `, ${geoInfo.region}` : ''}`,
+            message: `Current location: ${detectedCity}${geoInfo.region ? `, ${geoInfo.region}` : ''}`,
             coords: { latitude, longitude }
           });
 
           // Save to search history
           setSearchHistory((prev) => {
             const filtered = prev.filter(
-              (item) => item.city.toLowerCase() !== detectedCity.toLowerCase()
+              (item) => (item.city || '').toLowerCase() !== detectedCity.toLowerCase()
             );
             return [
               {
                 city: detectedCity,
                 country: geoInfo.country || 'Current Location',
                 query: detectedCity,
+                displayName: canonicalLoc.displayName,
+                latitude,
+                longitude,
                 timestamp: new Date().toISOString()
               },
               ...filtered
             ].slice(0, 10);
           });
 
-          // Update weather atmosphere on document body
-          const cond = weatherRes.current.condition.toLowerCase();
-          document.body.classList.remove(
-            'weather-sunny', 'weather-cloudy', 'weather-rain', 
-            'weather-storm', 'weather-snow', 'weather-night'
-          );
-
-          if (cond.includes('rain') || cond.includes('shower')) {
-            document.body.classList.add('weather-rain');
-          } else if (cond.includes('storm') || cond.includes('thunder')) {
-            document.body.classList.add('weather-storm');
-          } else if (cond.includes('snow') || cond.includes('blizzard')) {
-            document.body.classList.add('weather-snow');
-          } else if (cond.includes('cloud')) {
-            document.body.classList.add('weather-cloudy');
-          } else if (cond.includes('night')) {
-            document.body.classList.add('weather-night');
-          } else {
-            document.body.classList.add('weather-sunny');
-          }
+          addBackendSearchHistory(userId, {
+            rawQuery: 'Current Device Location',
+            resolvedName: detectedCity,
+            location: canonicalLoc.displayName,
+            latitude,
+            longitude,
+            country: geoInfo.country,
+            state: geoInfo.region
+          }).catch(() => {});
 
         } catch (err) {
           console.error("Failed to load weather for detected location:", err);
@@ -223,7 +308,7 @@ export function useWeather(initialCity = 'jodhpur') {
         if (err.code === err.PERMISSION_DENIED) {
           setGeoState({
             status: 'denied',
-            message: 'Location access was denied. Please allow location access in your browser.'
+            message: 'Location access was denied. Please allow location permission in your browser.'
           });
         } else if (err.code === err.TIMEOUT) {
           setGeoState({
@@ -239,34 +324,28 @@ export function useWeather(initialCity = 'jodhpur') {
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
-  }, [setSearchHistory]);
+  }, [userId, setSearchHistory]);
 
-  // Bi-directional map city selector
   const selectCityFromMap = (cityName) => {
-    if (cityName && cityName.toLowerCase() !== city.toLowerCase()) {
-      lastLoadedCityRef.current = '';
-      setCity(cityName);
+    if (cityName) {
+      loadWeatherData(cityName);
     }
   };
 
   const clearHistory = () => setSearchHistory([]);
 
   return {
-    city,
-    setCity: (newCity) => {
-      lastLoadedCityRef.current = '';
-      setCity(newCity);
-    },
+    location,
+    city: location.name,
+    setCity: (target) => loadWeatherData(target),
+    selectLocation: (targetLoc) => loadWeatherData(targetLoc),
     weather,
     forecast,
     alerts,
     climate,
     loading,
     error,
-    retry: () => {
-      lastLoadedCityRef.current = '';
-      loadWeatherData(city);
-    },
+    retry: () => loadWeatherData(location),
     tempUnit,
     setTempUnit,
     windUnit,
@@ -284,3 +363,5 @@ export function useWeather(initialCity = 'jodhpur') {
     requestLocation
   };
 }
+
+export default useWeather;
