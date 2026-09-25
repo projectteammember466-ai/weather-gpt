@@ -35,6 +35,10 @@ export function validateLocationQuery(req, res, next) {
     return next(new ValidationError('Search query parameter (q) is required and cannot be empty.'));
   }
 
+  if (q.trim().length > 100) {
+    return next(new ValidationError('Search query is too long (maximum 100 characters allowed).'));
+  }
+
   req.validatedQuery = q.trim();
   next();
 }
@@ -79,6 +83,10 @@ export function validateChatPayload(req, res, next) {
 
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
     return next(new ValidationError('Message body parameter is required and cannot be empty.'));
+  }
+
+  if (message.trim().length > 1000) {
+    return next(new ValidationError('Message payload is too long (maximum 1000 characters allowed).'));
   }
 
   next();
