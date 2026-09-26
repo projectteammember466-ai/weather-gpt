@@ -1,4 +1,4 @@
-# Logs
+# Logs & Temporary Files
 logs
 *.log
 npm-debug.log*
@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+tmp/
+temp/
 
 # Dependencies & Build Outputs
 node_modules/
@@ -13,18 +15,8 @@ dist/
 dist-ssr/
 frontend/node_modules/
 frontend/dist/
+coverage/
 *.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 
 # Environment Variables & Secrets
 .env
@@ -35,8 +27,33 @@ frontend/dist/
 env
 backend/.env
 backend/.env.*
-!backend/.env.example
+!.backend/.env.example
+frontend/.env
+frontend/.env.*
+!.frontend/.env.example
+
+# Firebase Credentials & Private Keys
+serviceAccountKey.json
 *firebase-adminsdk*.json
+*-firebase-adminsdk-*.json
 weathergpt-bf6ba-*.json
+*.pem
+*.key
+credentials.json
+secrets.json
 
+# Exclude Documentation & Markdown Files from GitHub Deployment
+docs/
+*.md
 
+# System & Editor Directories
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
