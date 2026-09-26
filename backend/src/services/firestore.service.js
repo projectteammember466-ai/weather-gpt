@@ -6,8 +6,7 @@ const inMemoryStore = {
   searchHistory: new Map(), // userId -> array
   chatHistory: new Map(),   // userId -> array
   savedLocations: new Map(), // userId -> array
-  alertPreferences: new Map(),
-  dashboardPreferences: new Map()
+  alertPreferences: new Map()
 };
 
 /**
@@ -170,14 +169,11 @@ export async function saveSearchHistory(userId, searchData = {}) {
 
   const db = getFirestoreDb();
   if (isFirebaseConfigured() && db) {
-    // 1. Write to user subcollection users/{userId}/searchHistory/{searchId}
+    // Write to user subcollection users/{userId}/searchHistory/{searchId}
     const subcollRef = db.collection('users').doc(targetUserId).collection('searchHistory').doc(searchId);
     await subcollRef.set(record);
 
-    // 2. Write to top-level searchHistory for backwards compatibility
-    await db.collection('searchHistory').doc(searchId).set(record);
-
-    // 3. Increment statistics on user root document
+    // Update statistics on user root document
     const userRef = db.collection('users').doc(targetUserId);
     await userRef.set({
       userId: targetUserId,
@@ -204,23 +200,14 @@ export async function getSearchHistory(userId, limit = 10) {
 
   if (isFirebaseConfigured() && db) {
     try {
-      // 1. Primary: Subcollection users/{userId}/searchHistory
+      // Subcollection users/{userId}/searchHistory
       const subSnapshot = await db.collection('users').doc(targetUserId).collection('searchHistory').get();
       if (!subSnapshot.empty) {
         const docs = subSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         docs.sort((a, b) => new Date(b.searchedAt || b.createdAt || 0) - new Date(a.searchedAt || a.createdAt || 0));
         return docs.slice(0, limit);
       }
-
-      // 2. Fallback: Top-level searchHistory collection
-      const topSnapshot = await db.collection('searchHistory')
-        .where('userId', '==', targetUserId)
-        .get();
-      if (!topSnapshot.empty) {
-        const docs = topSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        docs.sort((a, b) => new Date(b.searchedAt || b.createdAt || 0) - new Date(a.searchedAt || a.createdAt || 0));
-        return docs.slice(0, limit);
-      }
+      return [];
     } catch (err) {
       console.warn('Firestore getSearchHistory error:', err.message);
     }
@@ -235,10 +222,7 @@ export async function deleteSearchHistory(userId, searchId) {
   const db = getFirestoreDb();
 
   if (isFirebaseConfigured() && db) {
-    // Delete from subcollection
     await db.collection('users').doc(targetUserId).collection('searchHistory').doc(searchId).delete();
-    // Delete from top-level collection if present
-    await db.collection('searchHistory').doc(searchId).delete();
     return { success: true, searchId };
   }
 
@@ -278,14 +262,9 @@ export async function saveChatMessage(userId, chatData = {}) {
 
   const db = getFirestoreDb();
   if (isFirebaseConfigured() && db) {
-    // Write to subcollection users/{userId}/chatHistory/{chatId}
     const subcollRef = db.collection('users').doc(targetUserId).collection('chatHistory').doc(chatId);
     await subcollRef.set(record);
 
-    // Write to top-level collection for backwards compatibility
-    await db.collection('chatHistory').doc(chatId).set(record);
-
-    // Update user statistics
     const userRef = db.collection('users').doc(targetUserId);
     await userRef.set({
       userId: targetUserId,
@@ -311,23 +290,13 @@ export async function getChatHistory(userId, limit = 20) {
 
   if (isFirebaseConfigured() && db) {
     try {
-      // Subcollection first
       const subSnapshot = await db.collection('users').doc(targetUserId).collection('chatHistory').get();
       if (!subSnapshot.empty) {
         const docs = subSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         docs.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         return docs.slice(0, limit);
       }
-
-      // Top-level fallback
-      const topSnapshot = await db.collection('chatHistory')
-        .where('userId', '==', targetUserId)
-        .get();
-      if (!topSnapshot.empty) {
-        const docs = topSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        docs.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-        return docs.slice(0, limit);
-      }
+      return [];
     } catch (err) {
       console.warn('Firestore getChatHistory error:', err.message);
     }
@@ -366,14 +335,9 @@ export async function saveLocation(userId, locationData = {}) {
 
   const db = getFirestoreDb();
   if (isFirebaseConfigured() && db) {
-    // Write to subcollection users/{userId}/savedLocations/{locationId}
     const subcollRef = db.collection('users').doc(targetUserId).collection('savedLocations').doc(locationId);
     await subcollRef.set(record);
 
-    // Write to top-level savedLocations for backwards compatibility
-    await db.collection('savedLocations').doc(locationId).set(record);
-
-    // Update user statistics
     const userRef = db.collection('users').doc(targetUserId);
     await userRef.set({
       userId: targetUserId,
@@ -399,10 +363,7 @@ export async function removeSavedLocation(userId, locationId) {
   const db = getFirestoreDb();
 
   if (isFirebaseConfigured() && db) {
-    // Delete from subcollection
     await db.collection('users').doc(targetUserId).collection('savedLocations').doc(locationId).delete();
-    // Delete from top-level collection
-    await db.collection('savedLocations').doc(locationId).delete();
     return { success: true, id: locationId, locationId };
   }
 
@@ -418,127 +379,17 @@ export async function getSavedLocations(userId) {
 
   if (isFirebaseConfigured() && db) {
     try {
-      // Subcollection first
       const subSnapshot = await db.collection('users').doc(targetUserId).collection('savedLocations').get();
       if (!subSnapshot.empty) {
         return subSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       }
-
-      // Top-level fallback
-      const topSnapshot = await db.collection('savedLocations')
-        .where('userId', '==', targetUserId)
-        .get();
-      if (!topSnapshot.empty) {
-        return topSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      }
+      return [];
     } catch (err) {
       console.warn('Firestore getSavedLocations error:', err.message);
     }
   }
 
   return inMemoryStore.savedLocations.get(targetUserId) || [];
-}
-
-/**
- * DASHBOARD PREFERENCES SERVICE
- * Subcollection Path: users/{userId}/dashboardPreferences/default
- */
-export async function updateDashboardPreferences(userId, prefsData = {}) {
-  const targetUserId = userId || 'anonymous';
-  const now = new Date().toISOString();
-
-  const payload = {
-    userId: targetUserId,
-    visibleSections: prefsData.visibleSections || {
-      currentWeather: true,
-      weatherDetails: true,
-      smartGuidance: true,
-      weatherTimeline: true,
-      weatherChart: true,
-      dailyForecast: true,
-      alertsAndSummary: true,
-      sunMoon: true,
-      weatherMap: true,
-      climate: true
-    },
-    sectionOrder: prefsData.sectionOrder || [
-      'currentWeather',
-      'weatherDetails',
-      'smartGuidance',
-      'weatherTimeline',
-      'weatherChart',
-      'dailyForecast',
-      'alertsAndSummary',
-      'sunMoon',
-      'weatherMap',
-      'climate'
-    ],
-    updatedAt: now
-  };
-
-  const db = getFirestoreDb();
-  if (isFirebaseConfigured() && db) {
-    // Write to subcollection users/{userId}/dashboardPreferences/default
-    await db.collection('users').doc(targetUserId).collection('dashboardPreferences').doc('default').set(payload, { merge: true });
-    // Write to top-level dashboardPreferences/{userId} for backwards compatibility
-    await db.collection('dashboardPreferences').doc(targetUserId).set(payload, { merge: true });
-    return payload;
-  }
-
-  inMemoryStore.dashboardPreferences.set(targetUserId, payload);
-  return payload;
-}
-
-export async function getDashboardPreferences(userId) {
-  const targetUserId = userId || 'anonymous';
-  const db = getFirestoreDb();
-
-  if (isFirebaseConfigured() && db) {
-    try {
-      // Subcollection first
-      const subDoc = await db.collection('users').doc(targetUserId).collection('dashboardPreferences').doc('default').get();
-      if (subDoc.exists) {
-        return subDoc.data();
-      }
-
-      // Top-level fallback
-      const topDoc = await db.collection('dashboardPreferences').doc(targetUserId).get();
-      if (topDoc.exists) {
-        return topDoc.data();
-      }
-    } catch (err) {
-      console.warn('Firestore getDashboardPreferences error:', err.message);
-    }
-  }
-
-  return inMemoryStore.dashboardPreferences.get(targetUserId) || {
-    userId: targetUserId,
-    visibleSections: {
-      currentWeather: true,
-      weatherDetails: true,
-      smartGuidance: true,
-      weatherTimeline: true,
-      weatherChart: true,
-      dailyForecast: true,
-      alertsAndSummary: true,
-      sunMoon: true,
-      weatherMap: true,
-      climate: true
-    },
-    sectionOrder: [
-      'currentWeather',
-      'weatherDetails',
-      'smartGuidance',
-      'weatherTimeline',
-      'weatherChart',
-      'dailyForecast',
-      'alertsAndSummary',
-      'sunMoon',
-      'weatherMap',
-      'climate'
-    ],
-    updatedAt: new Date().toISOString()
-  };
 }
 
 /**
@@ -558,10 +409,7 @@ export async function saveAlertPreferences(userId, preferencesData = {}) {
 
   const db = getFirestoreDb();
   if (isFirebaseConfigured() && db) {
-    // Write to subcollection users/{userId}/alertPreferences/default
     await db.collection('users').doc(targetUserId).collection('alertPreferences').doc('default').set(record, { merge: true });
-    // Write to top-level alertPreferences/{userId} for backwards compatibility
-    await db.collection('alertPreferences').doc(targetUserId).set(record, { merge: true });
     return record;
   }
 
@@ -575,17 +423,11 @@ export async function getAlertPreferences(userId) {
 
   if (isFirebaseConfigured() && db) {
     try {
-      // Subcollection first
       const subDoc = await db.collection('users').doc(targetUserId).collection('alertPreferences').doc('default').get();
       if (subDoc.exists) {
         return subDoc.data();
       }
-
-      // Top-level fallback
-      const topDoc = await db.collection('alertPreferences').doc(targetUserId).get();
-      if (topDoc.exists) {
-        return topDoc.data();
-      }
+      return null;
     } catch (err) {
       console.warn('Firestore getAlertPreferences error:', err.message);
     }
@@ -605,8 +447,6 @@ export default {
   saveLocation,
   removeSavedLocation,
   getSavedLocations,
-  updateDashboardPreferences,
-  getDashboardPreferences,
   saveAlertPreferences,
   getAlertPreferences
 };

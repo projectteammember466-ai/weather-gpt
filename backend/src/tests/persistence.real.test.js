@@ -33,28 +33,7 @@ describe('Real Firestore Persistence Regression Suite (Bug 1 & Bug 2 Verificatio
     }
   });
 
-  test('2. Verify DASHBOARD PREFERENCES collection real persistence', async () => {
-    const testUserId = `usr_test_prefs_${Date.now()}`;
-    const prefsPayload = {
-      userId: testUserId,
-      visibleSections: { currentWeather: true, smartGuidance: true, climate: false },
-      sectionOrder: ['currentWeather', 'smartGuidance', 'weatherMap', 'climate'],
-      updatedAt: new Date().toISOString()
-    };
 
-    if (isFirebaseConfigured()) {
-      const db = getFirestoreDb();
-      await db.collection('dashboardPreferences').doc(testUserId).set(prefsPayload, { merge: true });
-
-      const doc = await db.collection('dashboardPreferences').doc(testUserId).get();
-      assert.strictEqual(doc.exists, true, 'dashboardPreferences document must exist in Firestore');
-      assert.strictEqual(doc.data().visibleSections.climate, false);
-      assert.strictEqual(doc.data().sectionOrder[0], 'currentWeather');
-
-      // Cleanup
-      await db.collection('dashboardPreferences').doc(testUserId).delete();
-    }
-  });
 
   test('3. Verify SEARCH HISTORY canonical location persistence', async () => {
     const testUserId = `usr_test_sh_${Date.now()}`;

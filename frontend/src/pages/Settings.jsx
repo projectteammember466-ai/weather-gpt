@@ -44,14 +44,6 @@ export function Settings({
   onNavigate
 }) {
   const { savedLocations, removeLocation } = useSavedLocations();
-  const { 
-    preferences, 
-    sectionOrder, 
-    toggleSection, 
-    moveSection, 
-    resetPreferences, 
-    isSectionVisible 
-  } = useDashboardPreferences();
 
   const [geminiKeyInput, setGeminiKeyInput] = useState(getGeminiApiKey());
   const [openWeatherKeyInput, setOpenWeatherKeyInput] = useState(getOpenWeatherApiKey());
@@ -548,114 +540,6 @@ export function Settings({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Dashboard Preferences & Personalization */}
-      <div className="glass-card" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <Sliders size={18} style={{ color: 'var(--accent-blue)' }} />
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 750 }}>
-              {t('dashboardPreferences', 'Dashboard Preferences')}
-            </h2>
-          </div>
-          <button
-            onClick={resetPreferences}
-            className="btn-secondary"
-            style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-          >
-            <RotateCcw size={13} />
-            <span>{t('resetOrder', 'Reset Default Order')}</span>
-          </button>
-        </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-          {t('dashboardPreferencesDesc', 'Choose which sections are displayed on your dashboard and customize their order.')}
-        </p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {sectionOrder.map((sectionKey, index) => {
-            const isVisible = isSectionVisible(sectionKey);
-            const label = SECTION_LABELS[sectionKey] || sectionKey;
-            const isFirst = index === 0;
-            const isLast = index === sectionOrder.length - 1;
-
-            return (
-              <div
-                key={sectionKey}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: 'var(--radius-md)',
-                  background: isVisible ? 'var(--surface-color)' : 'rgba(0,0,0,0.03)',
-                  border: '1px solid var(--surface-border)',
-                  opacity: isVisible ? 1 : 0.65,
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                <div 
-                  onClick={() => toggleSection(sectionKey)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flex: 1 }}
-                >
-                  {isVisible ? (
-                    <CheckSquare size={17} style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />
-                  ) : (
-                    <Square size={17} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                  )}
-                  <span style={{
-                    fontSize: '0.88rem',
-                    fontWeight: isVisible ? 650 : 450,
-                    color: isVisible ? 'var(--text-primary)' : 'var(--text-muted)'
-                  }}>
-                    {label}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <button
-                    onClick={() => moveSection(index, 'up')}
-                    disabled={isFirst}
-                    aria-label={`Move ${label} up`}
-                    title={t('moveUp', 'Move Up')}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid var(--surface-border)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '0.3rem',
-                      cursor: isFirst ? 'not-allowed' : 'pointer',
-                      opacity: isFirst ? 0.3 : 1,
-                      color: 'var(--text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <ArrowUp size={14} />
-                  </button>
-                  <button
-                    onClick={() => moveSection(index, 'down')}
-                    disabled={isLast}
-                    aria-label={`Move ${label} down`}
-                    title={t('moveDown', 'Move Down')}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid var(--surface-border)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '0.3rem',
-                      cursor: isLast ? 'not-allowed' : 'pointer',
-                      opacity: isLast ? 0.3 : 1,
-                      color: 'var(--text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <ArrowDown size={14} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       {/* AI & Weather API Keys Configuration Card */}

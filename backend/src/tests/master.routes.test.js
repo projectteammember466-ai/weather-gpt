@@ -81,7 +81,7 @@ describe('Complete Master API Endpoints Integration Test', () => {
     assert.ok(getChatRes.body.data.length > 0);
   });
 
-  test('User Settings & Dashboard Preferences API (/api/v1/user/settings & /api/v1/user/dashboard-preferences)', async () => {
+  test('User Settings API (/api/v1/user/settings)', async () => {
     // 1. Patch user settings
     const patchRes = await request(app)
       .patch('/api/v1/user/settings')
@@ -100,17 +100,5 @@ describe('Complete Master API Endpoints Integration Test', () => {
     const getSetRes = await request(app).get(`/api/v1/user/settings?userId=${testUserId}`);
     assert.strictEqual(getSetRes.status, 200);
     assert.strictEqual(getSetRes.body.data.contextMode, 'farmer');
-
-    // 3. Patch dashboard preferences
-    const dashRes = await request(app)
-      .patch('/api/v1/user/dashboard-preferences')
-      .send({
-        userId: testUserId,
-        visibleSections: ['hero', 'details', 'hourly'],
-        sectionOrder: ['hero', 'details', 'hourly']
-      });
-
-    assert.strictEqual(dashRes.status, 200);
-    assert.strictEqual(dashRes.body.data.visibleSections.length, 3);
   });
 });

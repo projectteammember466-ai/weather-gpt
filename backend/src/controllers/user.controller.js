@@ -2,9 +2,6 @@ import { successResponse } from '../utils/response.utils.js';
 import firestoreService from '../services/firestore.service.js';
 import { getFirestoreDb, isFirebaseConfigured } from '../config/firebase.js';
 
-// In-memory store fallback for dashboard preferences
-const inMemoryDashboardPrefs = new Map();
-
 export async function updateProfile(req, res, next) {
   try {
     const { userId, ...userData } = req.body;
@@ -72,108 +69,6 @@ export async function updateSettings(req, res, next) {
       ...updatedUser,
       alertPreferences: alertPreferences || {}
     });
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function getDashboardPreferences(req, res, next) {
-  try {
-    const userId = req.query.userId || req.params.userId || 'anonymous';
-    const db = getFirestoreDb();
-
-    if (isFirebaseConfigured() && db) {
-      const doc = await db.collection('dashboardPreferences').doc(userId).get();
-      if (doc.exists) {
-        return successResponse(res, doc.data());
-      }
-    }
-
-    const defaultOrder = [
-      'currentWeather',
-      'weatherDetails',
-      'smartGuidance',
-      'weatherTimeline',
-      'weatherChart',
-      'dailyForecast',
-      'alertsAndSummary',
-      'sunMoon',
-      'weatherMap',
-      'climate'
-    ];
-
-    const defaultVisibility = {
-      currentWeather: true,
-      weatherDetails: true,
-      smartGuidance: true,
-      weatherTimeline: true,
-      weatherChart: true,
-      dailyForecast: true,
-      alertsAndSummary: true,
-      sunMoon: true,
-      weatherMap: true,
-      climate: true
-    };
-
-    const fallback = inMemoryDashboardPrefs.get(userId) || {
-      userId,
-      visibleSections: defaultVisibility,
-      sectionOrder: defaultOrder,
-      updatedAt: new Date().toISOString()
-    };
-
-    return successResponse(res, fallback);
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function updateDashboardPreferences(req, res, next) {
-  try {
-    const { userId, visibleSections, sectionOrder } = req.body;
-    const targetUserId = userId || req.query.userId || 'anonymous';
-
-    const defaultOrder = [
-      'currentWeather',
-      'weatherDetails',
-      'smartGuidance',
-      'weatherTimeline',
-      'weatherChart',
-      'dailyForecast',
-      'alertsAndSummary',
-      'sunMoon',
-      'weatherMap',
-      'climate'
-    ];
-
-    const defaultVisibility = {
-      currentWeather: true,
-      weatherDetails: true,
-      smartGuidance: true,
-      weatherTimeline: true,
-      weatherChart: true,
-      dailyForecast: true,
-      alertsAndSummary: true,
-      sunMoon: true,
-      weatherMap: true,
-      climate: true
-    };
-
-    const payload = {
-      userId: targetUserId,
-      visibleSections: visibleSections || defaultVisibility,
-      sectionOrder: sectionOrder || defaultOrder,
-      updatedAt: new Date().toISOString()
-    };
-
-    const db = getFirestoreDb();
-    if (isFirebaseConfigured() && db) {
-      await db.collection('dashboardPreferences').doc(targetUserId).set(payload, { merge: true });
-    } else {
-      inMemoryDashboardPrefs.set(targetUserId, payload);
-    }
-
-    return successResponse(res, payload);
   } catch (err) {
     next(err);
   }
@@ -255,8 +150,6 @@ export default {
   getProfile,
   getSettings,
   updateSettings,
-  getDashboardPreferences,
-  updateDashboardPreferences,
   addSearchHistory,
   fetchSearchHistory,
   addSavedLocation,

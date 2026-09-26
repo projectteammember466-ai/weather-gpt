@@ -18,8 +18,20 @@ import { SmartWeatherGuidance } from '../components/weather/SmartWeatherGuidance
 import { WeatherTimeline } from '../components/weather/WeatherTimeline';
 import { WeatherShareModal } from '../components/weather/WeatherShareModal';
 import { useSavedLocations } from '../hooks/useSavedLocations';
-import { useDashboardPreferences } from '../hooks/useDashboardPreferences';
 import { MapPin, ArrowRight, Star } from 'lucide-react';
+
+const DASHBOARD_SECTION_ORDER = [
+  'currentWeather',
+  'weatherDetails',
+  'smartGuidance',
+  'weatherTimeline',
+  'weatherChart',
+  'dailyForecast',
+  'alertsAndSummary',
+  'sunMoon',
+  'weatherMap',
+  'climate'
+];
 
 export function Home({ 
   weatherState, 
@@ -53,7 +65,6 @@ export function Home({
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const { savedLocations, toggleLocation, isSaved } = useSavedLocations();
-  const { sectionOrder, isSectionVisible } = useDashboardPreferences();
 
   return (
     <div className="page-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -155,10 +166,8 @@ export function Home({
         <ErrorMessage message={error} onRetry={retry} t={t} />
       ) : weather ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          {/* Dynamic Personalized Section Order */}
-          {sectionOrder.map((sectionKey) => {
-            if (!isSectionVisible(sectionKey)) return null;
-
+          {/* Complete Weather Dashboard Sections */}
+          {DASHBOARD_SECTION_ORDER.map((sectionKey) => {
             switch (sectionKey) {
               case 'currentWeather':
               case 'hero':

@@ -79,21 +79,6 @@ describe('Firestore User-Scoped Subcollection Architecture Verification', () => 
       assert.strictEqual(locSubDoc.data().name, 'Udaipur');
     }
 
-    // 4. Update Dashboard Preferences and verify subcollection document
-    const dashPrefs = await firestoreService.updateDashboardPreferences(testUserId, {
-      visibleSections: { currentWeather: true, weatherMap: false },
-      sectionOrder: ['currentWeather', 'smartGuidance']
-    });
-    assert.strictEqual(dashPrefs.visibleSections.weatherMap, false);
-
-    if (isLive) {
-      // Direct inspection of users/{userId}/dashboardPreferences/default
-      const dashSubDocRef = db.collection('users').doc(testUserId).collection('dashboardPreferences').doc('default');
-      const dashSubDoc = await dashSubDocRef.get();
-      assert.strictEqual(dashSubDoc.exists, true, 'Document MUST physically exist at users/{userId}/dashboardPreferences/default');
-      assert.strictEqual(dashSubDoc.data().visibleSections.weatherMap, false);
-    }
-
     // 5. Verify root user statistics counters were updated
     if (isLive) {
       const userDoc = await db.collection('users').doc(testUserId).get();
@@ -116,12 +101,9 @@ describe('Firestore User-Scoped Subcollection Architecture Verification', () => 
     // 7. Cleanup remaining test artifacts
     if (isLive) {
       await db.collection('users').doc(testUserId).collection('savedLocations').doc(locRecord.id).delete();
-      await db.collection('users').doc(testUserId).collection('dashboardPreferences').doc('default').delete();
       await db.collection('users').doc(testUserId).delete();
       // Also clean backwards-compat top-level documents if created
       await db.collection('savedLocations').doc(locRecord.id).delete();
-      await db.collection('dashboardPreferences').doc(testUserId).delete();
     }
   });
-
 });

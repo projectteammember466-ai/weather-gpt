@@ -228,43 +228,7 @@ export async function removeBackendSavedLocation(locationId, userId = 'anonymous
   }
 }
 
-/**
- * Dashboard Preferences Synchronization via Express Backend (Firestore API)
- */
-export async function fetchDashboardPreferences(userId = 'anonymous') {
-  try {
-    const res = await fetch(`${BACKEND_BASE_URL}/user/dashboard-preferences?userId=${userId}`, {
-      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data) {
-        return json.data;
-      }
-    }
-  } catch (err) {
-    console.warn("Backend dashboard preferences fetch error:", err);
-  }
-  return null;
-}
 
-export async function saveDashboardPreferences(userId = 'anonymous', preferences = {}) {
-  try {
-    const res = await fetch(`${BACKEND_BASE_URL}/user/dashboard-preferences`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, ...preferences }),
-      signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined
-    });
-    if (res.ok) {
-      const json = await res.json();
-      return json.data;
-    }
-  } catch (err) {
-    console.warn("Backend dashboard preferences save error:", err);
-  }
-  return null;
-}
 
 /**
  * Search History Persistence via Express Backend (Firestore API)
@@ -353,8 +317,6 @@ export default {
   fetchBackendSavedLocations,
   addBackendSavedLocation,
   removeBackendSavedLocation,
-  fetchDashboardPreferences,
-  saveDashboardPreferences,
   addSearchHistory,
   fetchSearchHistory,
   deleteBackendSearchHistory,
