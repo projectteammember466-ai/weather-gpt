@@ -2,11 +2,11 @@ import app from './app.js';
 import config from './config/env.js';
 import logger from './utils/logger.utils.js';
 
-const PORT = config.port;
+const PORT = process.env.PORT || config.port || 10000;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`WeatherGPT Backend running on port ${PORT} in [${config.nodeEnv}] mode`);
-  logger.info(`Health check available at http://localhost:${PORT}/api/v1/health`);
+  logger.info(`Health check available at http://0.0.0.0:${PORT}/api/v1/health`);
 });
 
 // Handle unhandled rejections
