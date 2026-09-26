@@ -33,7 +33,7 @@ const corsOptions = {
 
     const isAllowed = config.corsOrigins.some(allowedOrigin => {
       return origin === allowedOrigin || origin.startsWith(allowedOrigin);
-    });
+    }) || origin.endsWith('.vercel.app');
 
     if (isAllowed || !config.isProduction) {
       callback(null, true);
