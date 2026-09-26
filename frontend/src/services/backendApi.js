@@ -4,7 +4,7 @@
  */
 
 export const BACKEND_BASE_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) ||
+  (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_BACKEND_URL || import.meta.env?.VITE_API_BASE_URL)) ||
   'http://localhost:5000/api/v1';
 
 let backendHealthChecked = false;
