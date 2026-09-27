@@ -2,7 +2,7 @@ import app from './app.js';
 import config from './config/env.js';
 import logger from './utils/logger.utils.js';
 
-const PORT = process.env.PORT || config.port || 5000;
+const PORT = Number(process.env.PORT || config.port || 5000);
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`WeatherGPT Backend running on port ${PORT} in [${config.nodeEnv}] mode`);
